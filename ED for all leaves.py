@@ -6,13 +6,8 @@ import numpy as np
 nodes = pd.read_csv("latest nodeages 0708.csv",low_memory=False)
 nodes = pd.DataFrame(nodes, columns = ["Unnamed: 0","id","parent","leaf_lft","leaf_rgt","unnamed:0","average"])
 
+leaves1 = pd.DataFrame(df_leaves,columns = ["id","parent","ott"])
 
-#leaves_with_ed = pd.read_csv("all leaves with ed.csv",low_memory=False)
-
-
-leaves1 = pd.read_csv("leaves with ed 0710.csv",low_memory=False)
-#leaves1 = pd.DataFrame(df_leaves,columns = ["id","parent","ott"])
-#leaves_for_scatter = pd.read_csv("calculated ed table.csv",low_memory=False)
 
 
 
@@ -23,18 +18,6 @@ def find_parents(a):   ##find parents based on a leaf id(a)
         list_parentsl.append(cp)
         cp = nodes.iat[int(cp)-1,2]
     return list_parentsl
-
-#list_parents0 = []
-#list_parents1 = []
-#for row in leaves.itertuples():
- #   p = int(getattr(row,"id"))#
-  #  listp = find_parents(p)
-   # listp1 = str(listp)
-   # listp1 = listp1.strip("[]")
-   # list_parents0.append(listp)
-   # list_parents1.append(listp1)
-#leaves = leaves.drop(columns = ["parents1"])
-#leaves["parents1"] = leaves["parents"].astype(str).str.replace(r'\[|\]|,', '')
 
 
 def find_des(a): ##return 1/descendants for a node id in the whole table
@@ -100,8 +83,8 @@ def ed(list_try):###try must be sorted from small to big！！！！！！！！
     return(sum(listed))
 
 
-
-def ed_terminal(list_try):###try must be sorted from big to small
+##calculate the ed contributed by the terminal branch
+def ed_terminal(list_try):###list try must be sorted from big to small
     list_try = sorted(list_try,reverse = True)
     count = 1
     for i in list_try:
@@ -114,82 +97,18 @@ def ed_terminal(list_try):###try must be sorted from big to small
 
 ##calculate ed
 
-#listed = []
+listed = []
 ed_by_terminal_branch = []
 for row in leaves1.itertuples():
     leaf_id = getattr(row,"id")
     allparents = find_parents(leaf_id)
     allparents = sorted(allparents)
-    #temp = ed(allparents)
+    temp = ed(allparents)
     temp1 = ed_terminal(allparents)
+    listed.append(temp)
     ed_by_terminal_branch.append(temp1)
     
-#leaves1["ed by terminal branch"] = ed_by_terminal_branch
-
-##write leaves1 to csv
-
-
-
-    #allparents = getattr(row,"parents1").split(",")
-    #allparents = list(map(int, allparents))#get a list of all parents with int(nodeid)
-#    #print(allparents)
-#    temp = ed(allparents)
-#    #print(temp)
-#    listed.append(temp)
-
-#leaves["ed"] = listed
-
-#leaves = pd.DataFrame(leaves,columns = ["id","ott","ed"])
-#leaves.to_csv("leaves with ed 0708.csv")
-
-#####if node with age is the last one: ed = age, else:find the last age and calculate the average
-
-#parents = [1, 59643, 59668, 60359, 60656, 60673, 541348, 541356, 543095, 543099, 543114, 804914, 805042, 805045, 805308, 812735, 812738, 812927, 827493, 827928,
-#827929, 836809, 836840, 840050, 840164, 841420, 875852, 875854, 875860, 884548, 884549, 884550, 884551, 884552]
-
-
-#list_des0 = []
-#for i in parents:
-#    j = find_des(i)
-#    list_des0.append(j)
-#list_age0 = []
-#for i in parents:
-#    j = find_age(i)
-#    list_age0.append(j)
-#print(list_des0)
-#print(list_age0)
-
-
-
-#ed,ED
-
-
-###make a scatter plot
-#import matplotlib.pyplot as plt
-
-#plt.xlabel("Published ED score",fontsize = 15,color = "black")
-#plt.ylabel("calculated ED score",fontsize = 15,color = "black")
-
-#plt.scatter(mammals0_300["ED"],mammals0_300["ed"],color = "blue",s = 50)
-
-#plt.show()
-##################linear regression analysis
-#from sklearn.linear_model import LinearRegression
-
-#lrModel = LinearRegression()
-
-#x = mammals0_300[["ED"]]
-#y = mammals0_300[["ed"]]
-
-#lrModel.fit(x,y)
-#lrModel.score(x,y)
-
-#alpha = lrModel.intercept_[0]
-#beta = lrModel.coef_[0][0]
-
-
-
-
-#mammals["ed"] = listed
-#mammals.to_csv("mammals(0623)001.csv",encoding = "gbk")
+leaves1["ed"] = listed
+leaves1["ed by terminal branch"] = ed_by_terminal_branch
+leaves1.to_csv("leaves with ed.csv",encoding = "gbk")
 

@@ -56,7 +56,6 @@ for i in age_list1:
 ages_final1['ages'] = all_ages_list1
 ages_final1["average"] = aver_ages
 
-
 ##ages_final1 is a dataframe includes one ott id and its corresponding age
 
 

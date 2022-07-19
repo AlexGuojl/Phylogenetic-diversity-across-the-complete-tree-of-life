@@ -76,7 +76,8 @@ def ed(list_try):###try must be sorted from small to big！！！！！！！！
                     count = 0#update count after calculate the ed
                     list1 = []#update the list1
                 else:
-                    ed = find_age(i)
+                    branch_length = ((find_age(list_try[(numround-count-1)])) - (find_age(i))) / (1+count)
+                    ed = find_age(i) + branch_length*(sum(list1)+(find_des(i)))
                     listed.append(ed)
                     break
     #listed = sorted(listed,reverse = True)

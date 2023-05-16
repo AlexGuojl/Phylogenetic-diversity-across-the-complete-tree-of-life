@@ -182,7 +182,7 @@ df_ed = pd.DataFrame(list_of_ed_list).transpose()
 
 #df_ed.to_csv("df_ed.csv",encoding = "gbk")
 
-df_ed.to_csv("ed_boostrap(100).csv",encoding = "gbk")
+df_ed.to_csv("ed_bootstrap(100).csv",encoding = "gbk")
 
 
 ##

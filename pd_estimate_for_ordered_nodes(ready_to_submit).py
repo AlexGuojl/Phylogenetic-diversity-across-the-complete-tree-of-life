@@ -172,48 +172,10 @@ df_pd23 = df_pd23.drop(index = 0)
 ls_nodeid = [60673,63780,63336,122046,172687,543115,805308,972346,1082356,1452621,1595859,1882225,2056499,840050,840051,840165,841421,875861,889827,889596,899851,884549,889849]
 df_pd23["node_id"] = ls_nodeid
 
-
-
-#replace name: crocodilia with crocodylia
-              #Agnatha with cyclostomata
-#replace name Osteichthyes with Actinopterygii
-
-
-
-
-
-
 df_ed = pd.read_csv("ed_boostrap(100).csv",low_memory=False)
 ed_values = df_ed.drop(columns = ["Unnamed: 0","id","parent","sum_ed","ed"])
-#841419-----875850
-ed_actin = ed_values[841418:875850]
 
 sum_ed = list(ed_actin.apply(lambda x: x.sum(), axis = 0))
-
-name = ["Actinopterygii"]*100
-
-dic_actin = {"name":name,"sum_ed":sum_ed}
-df_actin = pd.DataFrame(dic_actin)
-
-df_actin.to_csv("pd_Actin.csv")
-           
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#unnecessary to do it on only dated nodes!
-#go through the entire nodes_table
 
 #nodes:keep node_id, name, leaf_rgt,leaf_lft
 nodes_with_pd = df_nodes[['id', 'name', 'ott', 'parent', 'leaf_lft', 'leaf_rgt']]
@@ -254,15 +216,6 @@ df1 = pd.DataFrame(nodes_with_pd, columns = ["id","name","richness"])
 nodes_with_pd_final = pd.concat([df1,nodes_with_pd1],axis = 1)
 
 
-#redo the bony fish
-
-ls_of_unnamed_pd_true = []
-for row in unnamed_nodes.itertuples():
-    misadded_pd = getattr(row,"misadded_pd")
-    lft = getattr(row,"leaf_lft")
-    rgt = getattr(row,"leaf_rgt")
-    ed_ranged = ed_values[lft-1:rgt]#index = leaf_id - 1
-    sum_ed = list(ed_ranged.apply(lambda x: x.sum(), axis = 0))
 
 
 

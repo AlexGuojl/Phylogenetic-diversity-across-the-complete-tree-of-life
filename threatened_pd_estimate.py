@@ -31,7 +31,7 @@ def find_des(a): ##return 1/descendants for a node id in the whole table
     else:
         return(1/(df_nodes.iloc[a-1,6]-df_nodes.iloc[a-1,5]+1))
 
-#一个parent的列表
+
 def find_parents_with_date_PD(node_id):##find closest node parents that have a date
     #based on a node id(a)
     list_try = []#list of parents
@@ -74,7 +74,6 @@ def ed_terminal(leaf_id):###try must be sorted from big to small
     return (ed_terminal)
 
 
- ##仅限于与leaf直接相连的node!
 def node_terminal(node_id):###checked correct
     if find_age_for_pd_estimate(node_id)>0:
         return (find_age_for_pd_estimate(node_id))
@@ -130,11 +129,10 @@ def ed_node_realp(node_id): #all the id are nodes, so no need to use leaf_realpa
                 ls_des = []
     #print(ls_ed)
         return(float(format(sum(ls_ed),'.6f')))
- #先向下找，再向上找
     if find_age_for_pd_estimate(node_id) == 0:
-        df_des_node = df_nodes[df_nodes["parent"] == node_id]#这是第一代descendants——以nodeid为parent的nodes，这一步的目的是向下找出一个接近的node date，以便估计branch length
+        df_des_node = df_nodes[df_nodes["parent"] == node_id]
         ls_des_age = df_des_node["id"].apply(find_age_for_pd_estimate)
-        ls_des_age = sorted(ls_des_age,reverse = True)#第[0]位应该是最大的node age
+        ls_des_age = sorted(ls_des_age,reverse = True)
         count = 0
         if ls_des_age == []:
             ls_des_age.append(0)
@@ -142,7 +140,7 @@ def ed_node_realp(node_id): #all the id are nodes, so no need to use leaf_realpa
         if ls_des_age[0] > 0:
             count += 1
         else:
-            while True:#最终你需要：1.找了几代才找到的大于0的age(count)；2.找到的那个最大的age(ls_des_age[0])
+            while True:
                 df_des_node= df_nodes[df_nodes["parent"].isin(list(df_des_node["id"]))]
                 ls_des_age = df_des_node["id"].apply(find_age_for_pd_estimate)
                 ls_des_age = sorted(ls_des_age,reverse = True)
@@ -152,8 +150,7 @@ def ed_node_realp(node_id): #all the id are nodes, so no need to use leaf_realpa
                     break
                 if ls_des_age[0] > 0:
                     break
-            ##后代的age是ls_des_age[0]，往子代方向追溯的代数是[count]
-            #接下来往前追溯，和之前一样
+
         list_try = []#list of parents
         cp = df_nodes.iat[int(node_id)-1,2]
         while cp != -27400288:##not the root(oldest node)
@@ -205,7 +202,6 @@ def sum_ed_clade(node_id):
     sum_ed = list(ed_ranged.apply(lambda x: x.sum(), axis = 0))
     return(sum_ed)
 
-#下一个：计算两个node之间的branch length
 def interial_branch_length(node_id): #all the id are nodes, so no need to use leaf_realparent
     if find_age_for_pd_estimate(node_id)>0:
         list_try = []#list of parents
@@ -225,9 +221,9 @@ def interial_branch_length(node_id): #all the id are nodes, so no need to use le
                 return(bl_int)
             
     if find_age_for_pd_estimate(node_id) == 0:
-        df_des_node = df_nodes[df_nodes["parent"] == node_id]#这是第一代descendants——以nodeid为parent的nodes，这一步的目的是向下找出一个接近的node date，以便估计branch length
+        df_des_node = df_nodes[df_nodes["parent"] == node_id]
         ls_des_age = df_des_node["id"].apply(find_age_for_pd_estimate)
-        ls_des_age = sorted(ls_des_age,reverse = True)#第[0]位应该是最大的node age
+        ls_des_age = sorted(ls_des_age,reverse = True)
         count = 0
         if ls_des_age == []:
             ls_des_age.append(0)
@@ -235,7 +231,7 @@ def interial_branch_length(node_id): #all the id are nodes, so no need to use le
         if ls_des_age[0] > 0:
             count += 1
         else:
-            while True:#最终你需要：1.找了几代才找到的大于0的age(count)；2.找到的那个最大的age(ls_des_age[0])
+            while True:
                 df_des_node= df_nodes[df_nodes["parent"].isin(list(df_des_node["id"]))]
                 ls_des_age = df_des_node["id"].apply(find_age_for_pd_estimate)
                 ls_des_age = sorted(ls_des_age,reverse = True)
@@ -265,14 +261,10 @@ def interial_branch_length(node_id): #all the id are nodes, so no need to use le
 
 def threatened_pd_tes1(node_id):
     ls_pdnode = []
-#对于parent dataframe的id 通过list(range())获取所有的descendants
     ls_alldes = find_all_descendants_node(node_id)
-#判断这一列表是否为list(df_parent["id"])的子集_#如果是：
     if set(ls_alldes).issubset(set(list(df_tes1["id"]))):
-    #再找这个node的parent，
         node_parent = find_closest_parent_node(node_id)
         ls_alldes2 = find_all_descendants_node(node_parent)
-    #通过list(range())获取其所有的descendants并判断这一列表是否为threatened_leaves的子集
         if set(ls_alldes2).issubset(set(list(df_tes1["id"]))):
             ls_pdnode.append(0)
             return(sum(ls_pdnode))
@@ -282,22 +274,16 @@ def threatened_pd_tes1(node_id):
             threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
             ls_pdnode.append(threatened_pd)
             return(sum(ls_pdnode))
-    #如果不是：
     else:
-        #这个node的threatened pd就是直接与这个node相连的tbl
         ls_pdnode.append(node_terminal(node_id))
         return(sum(ls_pdnode))
 
 def threatened_pd_tes2(node_id):
     ls_pdnode = []
-#对于parent dataframe的id 通过list(range())获取所有的descendants
     ls_alldes = find_all_descendants_node(node_id)
-#判断这一列表是否为list(df_parent["id"])的子集_#如果是：
     if set(ls_alldes).issubset(set(list(df_tes2["id"]))):
-    #再找这个node的parent，
         node_parent = find_closest_parent_node(node_id)
         ls_alldes2 = find_all_descendants_node(node_parent)
-    #通过list(range())获取其所有的descendants并判断这一列表是否为threatened_leaves的子集
         if set(ls_alldes2).issubset(set(list(df_tes2["id"]))):
             ls_pdnode.append(0)
             return(sum(ls_pdnode))
@@ -307,23 +293,17 @@ def threatened_pd_tes2(node_id):
             threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
             ls_pdnode.append(threatened_pd)
             return(sum(ls_pdnode))
-    #如果不是：
     else:
-        #这个node的threatened pd就是直接与这个node相连的tbl
         ls_pdnode.append(node_terminal(node_id))
         return(sum(ls_pdnode))
     
 #squ,act,cho,cro,amp
 def threatened_pd_squ1(node_id):
     ls_pdnode = []
-#对于parent dataframe的id 通过list(range())获取所有的descendants
     ls_alldes = find_all_descendants_node(node_id)
-#判断这一列表是否为list(df_parent["id"])的子集_#如果是：
     if set(ls_alldes).issubset(set(list(df_squ1["id"]))):
-    #再找这个node的parent，
         node_parent = find_closest_parent_node(node_id)
         ls_alldes2 = find_all_descendants_node(node_parent)
-    #通过list(range())获取其所有的descendants并判断这一列表是否为threatened_leaves的子集
         if set(ls_alldes2).issubset(set(list(df_squ1["id"]))):
             ls_pdnode.append(0)
             return(sum(ls_pdnode))
@@ -333,22 +313,16 @@ def threatened_pd_squ1(node_id):
             threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
             ls_pdnode.append(threatened_pd)
             return(sum(ls_pdnode))
-    #如果不是：
     else:
-        #这个node的threatened pd就是直接与这个node相连的tbl
         ls_pdnode.append(node_terminal(node_id))
         return(sum(ls_pdnode))
 
 def threatened_pd_squ2(node_id):
     ls_pdnode = []
-#对于parent dataframe的id 通过list(range())获取所有的descendants
     ls_alldes = find_all_descendants_node(node_id)
-#判断这一列表是否为list(df_parent["id"])的子集_#如果是：
     if set(ls_alldes).issubset(set(list(df_squ2["id"]))):
-    #再找这个node的parent，
         node_parent = find_closest_parent_node(node_id)
         ls_alldes2 = find_all_descendants_node(node_parent)
-    #通过list(range())获取其所有的descendants并判断这一列表是否为threatened_leaves的子集
         if set(ls_alldes2).issubset(set(list(df_squ2["id"]))):
             ls_pdnode.append(0)
             return(sum(ls_pdnode))
@@ -358,22 +332,16 @@ def threatened_pd_squ2(node_id):
             threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
             ls_pdnode.append(threatened_pd)
             return(sum(ls_pdnode))
-    #如果不是：
     else:
-        #这个node的threatened pd就是直接与这个node相连的tbl
         ls_pdnode.append(node_terminal(node_id))
         return(sum(ls_pdnode))
 
 def threatened_pd_act1(node_id):
     ls_pdnode = []
-#对于parent dataframe的id 通过list(range())获取所有的descendants
     ls_alldes = find_all_descendants_node(node_id)
-#判断这一列表是否为list(df_parent["id"])的子集_#如果是：
     if set(ls_alldes).issubset(set(list(df_act1["id"]))):
-    #再找这个node的parent，
         node_parent = find_closest_parent_node(node_id)
         ls_alldes2 = find_all_descendants_node(node_parent)
-    #通过list(range())获取其所有的descendants并判断这一列表是否为threatened_leaves的子集
         if set(ls_alldes2).issubset(set(list(df_act1["id"]))):
             ls_pdnode.append(0)
             return(sum(ls_pdnode))
@@ -383,22 +351,16 @@ def threatened_pd_act1(node_id):
             threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
             ls_pdnode.append(threatened_pd)
             return(sum(ls_pdnode))
-    #如果不是：
     else:
-        #这个node的threatened pd就是直接与这个node相连的tbl
         ls_pdnode.append(node_terminal(node_id))
         return(sum(ls_pdnode))
 
 def threatened_pd_act2(node_id):
     ls_pdnode = []
-#对于parent dataframe的id 通过list(range())获取所有的descendants
     ls_alldes = find_all_descendants_node(node_id)
-#判断这一列表是否为list(df_parent["id"])的子集_#如果是：
     if set(ls_alldes).issubset(set(list(df_act2["id"]))):
-    #再找这个node的parent，
         node_parent = find_closest_parent_node(node_id)
         ls_alldes2 = find_all_descendants_node(node_parent)
-    #通过list(range())获取其所有的descendants并判断这一列表是否为threatened_leaves的子集
         if set(ls_alldes2).issubset(set(list(df_act2["id"]))):
             ls_pdnode.append(0)
             return(sum(ls_pdnode))
@@ -408,23 +370,17 @@ def threatened_pd_act2(node_id):
             threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
             ls_pdnode.append(threatened_pd)
             return(sum(ls_pdnode))
-    #如果不是：
     else:
-        #这个node的threatened pd就是直接与这个node相连的tbl
         ls_pdnode.append(node_terminal(node_id))
         return(sum(ls_pdnode))
 
 
 def threatened_pd_cho1(node_id):
     ls_pdnode = []
-#对于parent dataframe的id 通过list(range())获取所有的descendants
     ls_alldes = find_all_descendants_node(node_id)
-#判断这一列表是否为list(df_parent["id"])的子集_#如果是：
     if set(ls_alldes).issubset(set(list(df_cho1["id"]))):
-    #再找这个node的parent，
         node_parent = find_closest_parent_node(node_id)
         ls_alldes2 = find_all_descendants_node(node_parent)
-    #通过list(range())获取其所有的descendants并判断这一列表是否为threatened_leaves的子集
         if set(ls_alldes2).issubset(set(list(df_cho1["id"]))):
             ls_pdnode.append(0)
             return(sum(ls_pdnode))
@@ -434,22 +390,16 @@ def threatened_pd_cho1(node_id):
             threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
             ls_pdnode.append(threatened_pd)
             return(sum(ls_pdnode))
-    #如果不是：
     else:
-        #这个node的threatened pd就是直接与这个node相连的tbl
         ls_pdnode.append(node_terminal(node_id))
         return(sum(ls_pdnode))
 
 def threatened_pd_cho2(node_id):
     ls_pdnode = []
-#对于parent dataframe的id 通过list(range())获取所有的descendants
     ls_alldes = find_all_descendants_node(node_id)
-#判断这一列表是否为list(df_parent["id"])的子集_#如果是：
     if set(ls_alldes).issubset(set(list(df_cho2["id"]))):
-    #再找这个node的parent，
         node_parent = find_closest_parent_node(node_id)
         ls_alldes2 = find_all_descendants_node(node_parent)
-    #通过list(range())获取其所有的descendants并判断这一列表是否为threatened_leaves的子集
         if set(ls_alldes2).issubset(set(list(df_cho2["id"]))):
             ls_pdnode.append(0)
             return(sum(ls_pdnode))
@@ -459,22 +409,16 @@ def threatened_pd_cho2(node_id):
             threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
             ls_pdnode.append(threatened_pd)
             return(sum(ls_pdnode))
-    #如果不是：
     else:
-        #这个node的threatened pd就是直接与这个node相连的tbl
         ls_pdnode.append(node_terminal(node_id))
         return(sum(ls_pdnode))
 
 def threatened_pd_cro1(node_id):
     ls_pdnode = []
-#对于parent dataframe的id 通过list(range())获取所有的descendants
     ls_alldes = find_all_descendants_node(node_id)
-#判断这一列表是否为list(df_parent["id"])的子集_#如果是：
     if set(ls_alldes).issubset(set(list(df_cro1["id"]))):
-    #再找这个node的parent，
         node_parent = find_closest_parent_node(node_id)
         ls_alldes2 = find_all_descendants_node(node_parent)
-    #通过list(range())获取其所有的descendants并判断这一列表是否为threatened_leaves的子集
         if set(ls_alldes2).issubset(set(list(df_cro1["id"]))):
             ls_pdnode.append(0)
             return(sum(ls_pdnode))
@@ -484,22 +428,16 @@ def threatened_pd_cro1(node_id):
             threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
             ls_pdnode.append(threatened_pd)
             return(sum(ls_pdnode))
-    #如果不是：
     else:
-        #这个node的threatened pd就是直接与这个node相连的tbl
         ls_pdnode.append(node_terminal(node_id))
         return(sum(ls_pdnode))
 
 def threatened_pd_cro2(node_id):
     ls_pdnode = []
-#对于parent dataframe的id 通过list(range())获取所有的descendants
     ls_alldes = find_all_descendants_node(node_id)
-#判断这一列表是否为list(df_parent["id"])的子集_#如果是：
     if set(ls_alldes).issubset(set(list(df_cro2["id"]))):
-    #再找这个node的parent，
         node_parent = find_closest_parent_node(node_id)
         ls_alldes2 = find_all_descendants_node(node_parent)
-    #通过list(range())获取其所有的descendants并判断这一列表是否为threatened_leaves的子集
         if set(ls_alldes2).issubset(set(list(df_cro2["id"]))):
             ls_pdnode.append(0)
             return(sum(ls_pdnode))
@@ -509,22 +447,16 @@ def threatened_pd_cro2(node_id):
             threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
             ls_pdnode.append(threatened_pd)
             return(sum(ls_pdnode))
-    #如果不是：
     else:
-        #这个node的threatened pd就是直接与这个node相连的tbl
         ls_pdnode.append(node_terminal(node_id))
         return(sum(ls_pdnode))
 
 def threatened_pd_amp1(node_id):
     ls_pdnode = []
-#对于parent dataframe的id 通过list(range())获取所有的descendants
     ls_alldes = find_all_descendants_node(node_id)
-#判断这一列表是否为list(df_parent["id"])的子集_#如果是：
     if set(ls_alldes).issubset(set(list(df_amp1["id"]))):
-    #再找这个node的parent，
         node_parent = find_closest_parent_node(node_id)
         ls_alldes2 = find_all_descendants_node(node_parent)
-    #通过list(range())获取其所有的descendants并判断这一列表是否为threatened_leaves的子集
         if set(ls_alldes2).issubset(set(list(df_amp1["id"]))):
             ls_pdnode.append(0)
             return(sum(ls_pdnode))
@@ -534,21 +466,15 @@ def threatened_pd_amp1(node_id):
             threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
             ls_pdnode.append(threatened_pd)
             return(sum(ls_pdnode))
-    #如果不是：
     else:
-        #这个node的threatened pd就是直接与这个node相连的tbl
         ls_pdnode.append(node_terminal(node_id))
         return(sum(ls_pdnode))
 def threatened_pd_amp2(node_id):
     ls_pdnode = []
-#对于parent dataframe的id 通过list(range())获取所有的descendants
     ls_alldes = find_all_descendants_node(node_id)
-#判断这一列表是否为list(df_parent["id"])的子集_#如果是：
     if set(ls_alldes).issubset(set(list(df_amp2["id"]))):
-    #再找这个node的parent，
         node_parent = find_closest_parent_node(node_id)
         ls_alldes2 = find_all_descendants_node(node_parent)
-    #通过list(range())获取其所有的descendants并判断这一列表是否为threatened_leaves的子集
         if set(ls_alldes2).issubset(set(list(df_amp2["id"]))):
             ls_pdnode.append(0)
             return(sum(ls_pdnode))
@@ -558,9 +484,7 @@ def threatened_pd_amp2(node_id):
             threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
             ls_pdnode.append(threatened_pd)
             return(sum(ls_pdnode))
-    #如果不是：
     else:
-        #这个node的threatened pd就是直接与这个node相连的tbl
         ls_pdnode.append(node_terminal(node_id))
         return(sum(ls_pdnode))
 
@@ -568,14 +492,10 @@ def threatened_pd_amp2(node_id):
 
 def threatened_pd_mam1(node_id):
     ls_pdnode = []
-#对于parent dataframe的id 通过list(range())获取所有的descendants
     ls_alldes = find_all_descendants_node(node_id)
-#判断这一列表是否为list(df_parent["id"])的子集_#如果是：
     if set(ls_alldes).issubset(set(list(df_mam1["id"]))):
-    #再找这个node的parent，
         node_parent = find_closest_parent_node(node_id)
         ls_alldes2 = find_all_descendants_node(node_parent)
-    #通过list(range())获取其所有的descendants并判断这一列表是否为threatened_leaves的子集
         if set(ls_alldes2).issubset(set(list(df_mam1["id"]))):
             ls_pdnode.append(0)
             return(sum(ls_pdnode))
@@ -585,23 +505,17 @@ def threatened_pd_mam1(node_id):
             threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
             ls_pdnode.append(threatened_pd)
             return(sum(ls_pdnode))
-    #如果不是：
     else:
-        #这个node的threatened pd就是直接与这个node相连的tbl
         ls_pdnode.append(node_terminal(node_id))
         return(sum(ls_pdnode))
 
     
 def threatened_pd_mam2(node_id):
     ls_pdnode = []
-#对于parent dataframe的id 通过list(range())获取所有的descendants
     ls_alldes = find_all_descendants_node(node_id)
-#判断这一列表是否为list(df_parent["id"])的子集_#如果是：
     if set(ls_alldes).issubset(set(list(df_mam2["id"]))):
-    #再找这个node的parent，
         node_parent = find_closest_parent_node(node_id)
         ls_alldes2 = find_all_descendants_node(node_parent)
-    #通过list(range())获取其所有的descendants并判断这一列表是否为threatened_leaves的子集
         if set(ls_alldes2).issubset(set(list(df_mam2["id"]))):
             ls_pdnode.append(0)
             return(sum(ls_pdnode))
@@ -611,22 +525,16 @@ def threatened_pd_mam2(node_id):
             threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
             ls_pdnode.append(threatened_pd)
             return(sum(ls_pdnode))
-    #如果不是：
     else:
-        #这个node的threatened pd就是直接与这个node相连的tbl
         ls_pdnode.append(node_terminal(node_id))
         return(sum(ls_pdnode))
 
 def threatened_pd_ave1(node_id):
     ls_pdnode = []
-#对于parent dataframe的id 通过list(range())获取所有的descendants
     ls_alldes = find_all_descendants_node(node_id)
-#判断这一列表是否为list(df_parent["id"])的子集_#如果是：
     if set(ls_alldes).issubset(set(list(df_ave1["id"]))):
-    #再找这个node的parent，
         node_parent = find_closest_parent_node(node_id)
         ls_alldes2 = find_all_descendants_node(node_parent)
-    #通过list(range())获取其所有的descendants并判断这一列表是否为threatened_leaves的子集
         if set(ls_alldes2).issubset(set(list(df_ave1["id"]))):
             ls_pdnode.append(0)
             return(sum(ls_pdnode))
@@ -636,22 +544,16 @@ def threatened_pd_ave1(node_id):
             threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
             ls_pdnode.append(threatened_pd)
             return(sum(ls_pdnode))
-    #如果不是：
     else:
-        #这个node的threatened pd就是直接与这个node相连的tbl
         ls_pdnode.append(node_terminal(node_id))
         return(sum(ls_pdnode))
 
 def threatened_pd_ave2(node_id):
     ls_pdnode = []
-#对于parent dataframe的id 通过list(range())获取所有的descendants
     ls_alldes = find_all_descendants_node(node_id)
-#判断这一列表是否为list(df_parent["id"])的子集_#如果是：
     if set(ls_alldes).issubset(set(list(df_ave2["id"]))):
-    #再找这个node的parent，
         node_parent = find_closest_parent_node(node_id)
         ls_alldes2 = find_all_descendants_node(node_parent)
-    #通过list(range())获取其所有的descendants并判断这一列表是否为threatened_leaves的子集
         if set(ls_alldes2).issubset(set(list(df_ave2["id"]))):
             ls_pdnode.append(0)
             return(sum(ls_pdnode))
@@ -661,18 +563,10 @@ def threatened_pd_ave2(node_id):
             threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
             ls_pdnode.append(threatened_pd)
             return(sum(ls_pdnode))
-    #如果不是：
     else:
-        #这个node的threatened pd就是直接与这个node相连的tbl
         ls_pdnode.append(node_terminal(node_id))
         return(sum(ls_pdnode))
-"""
-df_tet1 = pd.read_csv("threatened_tet.csv",low_memory=False)
-df_jaw1 = pd.read_csv("threatened_jawed.csv",low_memory=False)
 
-df_tet2 = pd.read_csv("threatened_tet_with_DD.csv",low_memory=False)
-df_jaw2 = pd.read_csv("threatened_jawed_with_DD.csv",low_memory=False)
-"""
 getparent = pd.DataFrame(leaves1,columns = ["id","parent","real_parent"])
 
 df_tes1 = pd.read_csv("threatened_test.csv",low_memory=False)
@@ -760,13 +654,10 @@ df_parent_ave2 = pd.DataFrame({"parent": list(set(list(df_ave2["parent"])))})
 
 
 
-
-##has been updated with the latest json data
 nodes_no_age = pd.DataFrame(nodes,columns = ["Unnamed: 0","id","parent","leaf_lft","leaf_rgt","unnamed:0"])
 
 ##always been updated with the latest json data
 ages = pd.read_csv("latest_node_dates(real_parent_only).csv", low_memory=False)
-
 
 ls_tes1 = []
 ls_squ1 = []

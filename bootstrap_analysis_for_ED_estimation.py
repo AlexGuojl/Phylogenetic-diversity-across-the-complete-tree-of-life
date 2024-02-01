@@ -9,16 +9,13 @@ from tqdm import tqdm
 tqdm.pandas(desc='apply')
 os.chdir("/Users/alexgjl/Desktop/master/项目2/文件")##change this to the path that the files existed in your computer
 
-
 #read in leaves table and keep necessary columns. 
-
 df_leaves = pd.read_csv("updated_ordered_leaves_2.0.csv",low_memory=False)
 leaves1 = pd.DataFrame(df_leaves,columns = ["id","parent","ott","real_parent"])
 
 
 #leaves table for calculating ed(leaves2 is a table of leaves in which species that have the same most
 ##recent ancestor are combined)
-
 leaves2 = leaves1
 leaves2['id'] = leaves2['id'].astype(str)
 leaves2 = leaves2.groupby("parent")["id"].apply(lambda x:x.str.cat(sep = ",")).reset_index()
@@ -177,7 +174,7 @@ while times < 101:
 ##combine the two species that have the same most recent common ancestor
 #leaves table for calculating ed(leaves2 is a table of leaves in which species that have the same real_parent are combined)
 
-    ##ccalculate ed for the entire table###############################
+    ##ccalculate ed for the entire table
     ed_total = leaves2["new_id"].apply(ed_new)
     #get the end time
     times = times+1

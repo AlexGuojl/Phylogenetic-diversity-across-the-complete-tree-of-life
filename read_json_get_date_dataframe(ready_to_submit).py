@@ -293,4 +293,4 @@ agetable = agetable.loc[agetable["id"] > 0]
 ##deal with overlapped node id:
 agetable = agetable.groupby("id")["ages"].apply(lambda x:x.str.cat(sep = ",")).reset_index()
 
-
+agetable.to_csv("latest_node_dates(real_parent)_2.0.csv",encoding = "gbk")

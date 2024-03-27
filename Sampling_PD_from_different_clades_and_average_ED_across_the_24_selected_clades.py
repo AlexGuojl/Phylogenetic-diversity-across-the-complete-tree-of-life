@@ -462,8 +462,8 @@ df_unnamed_pd1 = df_unnamed_pd["pd"].apply(pd.Series, index = list(range(0,100))
 df_unnamed_pd1["median_PD"]=  df_unnamed_pd1.median(axis=1)
 stratified_sample_unnamed_pd["median_PD"] = df_unnamed_pd1["median_PD"]
 #
-stratified_sample_unnamed_pd.to_csv("sampled_unnamed_pd(real_parent).csv",encoding = "gbk")
-stratified_sample_named_pd.to_csv("sampled_named_pd(real_parent).csv",encoding = "gbk")
+stratified_sample_unnamed_pd.to_csv("sampled_unnamed_pd(real_parent_only).csv",encoding = "gbk")
+stratified_sample_named_pd.to_csv("sampled_named_pd(real_parent_only).csv",encoding = "gbk")
 
 
 

@@ -13,4 +13,4 @@ This script will help us to calculate total PD for all the interior nodes across
 This script calculates cumulative ED value for each interior node of the top 20 EDGE species
 
 #figures_script
-This is a R script that can generate all the figures in this paper.
+This is a R script that can generate all the figures in this paper. Estimation of EDGE scores for those IUCN evaluated species is also given in this part.

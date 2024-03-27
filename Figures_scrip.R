@@ -7,10 +7,10 @@ library(RColorBrewer)
 library(ggnewscale)
 library(tidyverse)
 
-leaves_table <-  read.csv("updated_ordered_leaves.csv",
+leaves_table <-  read.csv("updated_ordered_leaves_2.0.csv",
                           stringsAsFactors=F, header=T)
 
-nodes_table <- read.csv("updated_ordered_nodes.csv",
+nodes_table <- read.csv("updated_ordered_nodes_2.0.csv",
                         stringsAsFactors=F, header=T)
 
 ###Figure 2: The distribution of ED scores across selected groups
@@ -223,7 +223,43 @@ Fig5 <- ggplot(pd_table24_l_Grouped,aes(x=as.factor(log_Richness),y=log(PD,10),f
   ylab("Log10 (PD) Myr")+xlab("Log10 (Richness)") #
 
 #Figure 6: EDGE estimation
-ed_top20 <- read.csv("edge20_final.csv",encoding = "gbk",stringsAsFactors=F, header=T)
+
+df_iucn <- read.csv("iucn.csv",
+                    stringsAsFactors=F, header=T)
+
+resolved_medianED$ott <- leaves_table$ott
+
+df_iucn$ott<-as.numeric(df_iucn$ott)
+resolved_medianED$ott<-as.numeric(resolved_medianED$ott)
+
+df_iucn <- select(df_iucn, ott, status_code)
+ed_table_for_edge <- merge(df_iucn,resolved_medianED,how = "left",on = ott)
+
+ed_table_for_edge$status_code[which(ed_table_for_edge$status_code == "CR")] <- 4
+ed_table_for_edge$status_code[which(ed_table_for_edge$status_code == "EN")] <- 3
+ed_table_for_edge$status_code[which(ed_table_for_edge$status_code == "VU")] <- 2
+ed_table_for_edge$status_code[which(ed_table_for_edge$status_code == "NT")] <- 1
+ed_table_for_edge$status_code[which(ed_table_for_edge$status_code == "LC")] <- 0
+ed_table_for_edge <- filter(ed_table_for_edge,ed_table_for_edge$status_code != "EX")
+ed_table_for_edge <- filter(ed_table_for_edge,ed_table_for_edge$status_code != "EW")
+ed_table_for_edge <- filter(ed_table_for_edge,ed_table_for_edge$status_code != "DD")
+
+#EDGEi = ln (1 + EDi) + GEi  ln (2)
+ed_table_for_edge$EDGE <- log(1+as.numeric(ed_table_for_edge$ed))+log(2)*as.numeric(ed_table_for_edge$status_code)
+df_name <- select(leaves_table,ott,name)
+df_edge <- merge(df_edge,df_name,how = "left",on = ott)
+df_edge <- filter(df_edge, df_edge$name != "Psephurus gladius")
+df_edge<-df_edge[order(-df_edge$EDGE),]
+rownames(df_edge) <- 1:nrow(df_edge )
+ed_top100 <- df_edge[0:100, ]
+ed_top100$status_code[which(ed_top100$status_code == "4")] <- "CR"
+ed_top100$status_code[which(ed_top100$status_code == "3")] <- "EN"
+ed_top100<-select(ed_top100,name,ed,EDGE,status_code)
+ed_top100$ED <- round(ed_top100$ED,2)
+ed_top100$EDGE <- round(ed_top100$EDGE,2)
+ed_top20 <- ed_top100[0:20, ]
+
+
 ed_values1 <- ed_top20[10:109]
 ls_names <- colnames(pd_table24[5:104])
 colnames(ed_values1) <- ls_names
@@ -546,12 +582,7 @@ dfED_Selected <- rbind(ED_Euk,dfED_dis2,dfED_dis3,dfED_dis4)
 
 dfED_dis2 <- rbind(ED_Euk,dfED_dis2)
 
-dfED_dis2 <-  read.csv("dfED_dis2.csv",
-                          stringsAsFactors=F, header=T)
-dfED_dis3 <-  read.csv("dfED_dis3.csv",
-                       stringsAsFactors=F, header=T)
-dfED_dis4 <-  read.csv("dfED_dis4.csv",
-                       stringsAsFactors=F, header=T)
+
 ##group by based on group and quant
 dfED_dis2$Quantile[which(dfED_dis2$Quantile == 1)] <- "Q(0.99)"
 dfED_dis2$Quantile[which(dfED_dis2$Quantile == 2)] <- "Q(0.95)"
@@ -640,6 +671,7 @@ dfED_dis4_1$Group.1 <- factor(dfED_dis4_1 $Group.1,levels = c("Cyclostomata","Ch
 dfED_dis4_1$Group.2 <- factor(dfED_dis4_1$Group.2 ,levels = c("Q(0.99)","Q(0.95)","Q(0.5)"," "))
 dfED_dis4_1$Quantile <- dfED_dis4_1$Group.2
 dfED_dis4_1$Clade <- dfED_dis4_1$Group.1
+
 p4 <- ggplot(dfED_dis4_1,aes(x=Clade,y=percent_quant,fill=Quantile))+
   geom_bar(stat = 'identity',width = 0.5,colour = "black")+
   theme_classic()+  scale_fill_discrete_sequential(palette = "Reds 3", 
@@ -703,63 +735,16 @@ df_phylo$Group[which(df_phylo$Group == "C")] <- "Resolved Node"
 df_phylo$Group[which(df_phylo$Group == "D")] <- "Leaf"
 df_phylo$Group  <- factor(df_phylo$Group,levels = c("Dated Node","Bifurcating Node without Date","Resolved Node", "Leaf"))
 
-library(ggrepel)
-df_phylo1 <- filter(df_phylo,0<df_phylo$rank2 & df_phylo$rank2<6)
-df_phylo2 <- filter(df_phylo,5<df_phylo$rank2 & df_phylo$rank2<11)
-df_phylo3 <- filter(df_phylo,10<df_phylo$rank2 & df_phylo$rank2<16)
-df_phylo4 <- filter(df_phylo,15<df_phylo$rank2 & df_phylo$rank2<21)
-  
-df_phylo1_1 <- filter(df_phylo1, df_phylo1$Group != "Leaf")
-df_phylo2_1 <- filter(df_phylo2, df_phylo2$Group != "Leaf")
-df_phylo3_1 <- filter(df_phylo3, df_phylo3$Group != "Leaf")
-df_phylo4_1 <- filter(df_phylo4, df_phylo4$Group != "Leaf")
+df_phylo_top10 <- filter(df_phylo,0<df_phylo$rank2 & df_phylo$rank2<11)
+df_phylo_top10$log_age<- log(df_phylo_top10$age+1,10)
+Fig_S6 <- ggplot(data=df_phylo_top10,aes(x=(0-log_age),y=log(node_ED,10),color = rank,alpha = 0.9))+
+  geom_point(aes(shape = Group, color=rank,size = Group))+theme_classic()+
+  scale_shape_manual(values = c("Bifurcating Node without Date"=1,"Dated Node" = 19,"Resolved Node" = 13,"Leaf" = 1))+
+  scale_size_manual(values= c("Resolved Node"=2, "Bifurcating Node without Date"=4,"Dated Node"=6,"Leaf" = 6))+
+  geom_line(aes(color=rank))+
+  scale_color_manual(values=c(No.1= "#c74546",No.2= "#c74546",No.3= "#fdc58f",No.4= "#fdc58f",
+                              No.5= "#4d97cd",No.6= "#c74546",No.7= "#4d97cd",No.8= "#c74546",
+                              No.9="#4d97cd",No.10= "#c74546"))+xlab("Log10(Node Date Estimate) Myr")+
+  ylab("Log10(ED) Myr") +facet_wrap(~ rank, scales = "free")+theme_classic()
 
-pline_edge1 <- ggplot(data=df_phylo1_1,aes(x=log(age,10),y=log(num_descendants,10),color = rank))+
-  geom_point(aes(shape = Group, color=rank,size = Group))+theme_classic()+scale_shape_manual(values = c("Bifurcating Node without Date"=1,"Dated Node" = 19,"Resolved Node" = 13))+
-  scale_size_manual(values= c("Resolved Node"=4, "Bifurcating Node without Date"=5,"Dated Node"=8))+geom_step(aes(color=rank))+scale_color_manual(values=c(No.1= "#c74546",No.2= "#ea9c9d",No.3="#fdc58f",
-                                                                                             No.4= "#99cbeb",No.5= "#4d97cd"))+
-  xlab("Log10(Node Date Estimate) Myr")+ylab("Log10(Number of Descendants)")
-
-
-pline_edge2 <- ggplot(data=df_phylo2_1,aes(x=log(age,10),y=log(num_descendants,10),color = rank))+
-  geom_point(aes(shape = Group, color=rank,size = Group))+theme_classic()+scale_shape_manual(values = c("Bifurcating Node without Date"=1,"Dated Node" = 19,"Resolved Node" = 13))+
-  scale_size_manual(values= c("Resolved Node"=4, "Bifurcating Node without Date"=5,"Dated Node"=8))+geom_step(aes(color=rank))+scale_color_manual(values=c(No.6= "#c74546",No.7= "#ea9c9d",No.8= "#fdc58f",
-                                                                                             No.9= "#99cbeb",No.10= "#4d97cd"))+
-  xlab("Log10(Node Date Estimate) Myr")+ylab("Log10(Number of Descendants)")
-
-pline_edge3 <- ggplot(data=df_phylo3_1,aes(x=log(age,10),y=log(num_descendants,10),color = rank))+
-  geom_point(aes(shape = Group, color=rank,size = Group))+theme_classic()+scale_shape_manual(values = c("Bifurcating Node without Date"=1,"Dated Node" = 19,"Resolved Node" = 13))+
-  scale_size_manual(values= c("Resolved Node"=4, "Bifurcating Node without Date"=5,"Dated Node"=8))+geom_step(aes(color=rank))+scale_color_manual(values=c(No.11= "#c74546",No.12= "#ea9c9d",No.13="#fdc58f" ,
-                                                                                              No.14= "#99cbeb",No.15= "#4d97cd"))+
-  xlab("Log10(Node Date Estimate) Myr")+ylab("Log10(Number of Descendants)")
-                                                                                        
-pline_edge4 <- ggplot(data=df_phylo4_1,aes(x=log(age,10),y=log(num_descendants,10),color = rank))+
-  geom_point(aes(shape = Group, color=rank,size = Group))+theme_classic()+scale_shape_manual(values = c("Bifurcating Node without Date"=1,"Dated Node" = 19,"Resolved Node" = 13))+
-  scale_size_manual(values= c("Resolved Node"=4, "Bifurcating Node without Date"=5,"Dated Node"=8))+geom_step(aes(color=rank))+scale_color_manual(values=c(No.16= "#c74546",No.17= "#ea9c9d",No.18= "#fdc58f",
-                                                                                             No.19= "#99cbeb",No.20= "#4d97cd"))+
-  xlab("Log10(Node Date Estimate) Myr")+ylab("Log10(Number of Descendants)")
-
-pline_ednode1 <- ggplot(data=df_phylo1,aes(x=log(age+1,10),y=log(node_ED,10),color = rank))+
-  geom_point(aes(shape = Group, color=rank,size = Group))+theme_classic()+scale_shape_manual(values = c("Bifurcating Node without Date"=1,"Dated Node" = 19,"Resolved Node" = 13,"Leaf" = 1))+
-  scale_size_manual(values= c("Resolved Node"=4, "Bifurcating Node without Date"=5,"Dated Node"=8,"Leaf" = 8))+geom_line(aes(color=rank))+scale_color_manual(values=c(No.1= "#c74546",No.2= "#ea9c9d",No.3="#fdc58f",
-  No.4= "#99cbeb",No.5= "#4d97cd"))+xlab("log10(Node Date Estimate) Myr")+ylab("Log10(ED) Myr")
-  
-                                                                                                                                                                                                                                        
-pline_ednode2 <- ggplot(data=df_phylo2,aes(x=log(age+1,10),y=log(node_ED,10),color = rank))+
-  geom_point(aes(shape = Group, color=rank,size = Group))+theme_classic()+scale_shape_manual(values = c("Bifurcating Node without Date"=1,"Dated Node" = 19,"Resolved Node" = 13,"Leaf" = 1))+
-  scale_size_manual(values= c("Resolved Node"=4, "Bifurcating Node without Date"=5,"Dated Node"=8,"Leaf" = 8))+geom_line(aes(color=rank))+scale_color_manual(values=c(No.6= "#c74546",No.7= "#ea9c9d",No.8="#fdc58f",
-  No.9= "#99cbeb",No.10= "#4d97cd"))+xlab("log10(Node Date Estimate) Myr")+ylab("Log10(ED) Myr")
-
-pline_ednode3 <- ggplot(data=df_phylo3,aes(x=log(age+1,10),y=log(node_ED,10),color = rank))+
-  geom_point(aes(shape = Group, color=rank,size = Group))+theme_classic()+scale_shape_manual(values = c("Bifurcating Node without Date"=1,"Dated Node" = 19,"Resolved Node" = 13,"Leaf" = 1))+
-  scale_size_manual(values= c("Resolved Node"=4, "Bifurcating Node without Date"=5,"Dated Node"=8,"Leaf" = 8))+geom_line(aes(color=rank))+scale_color_manual(values=c(No.11= "#c74546",No.12= "#ea9c9d",No.13="#fdc58f",
-  No.14= "#99cbeb",No.15= "#4d97cd"))+xlab("log10(Node Date Estimate) Myr")+ylab("Log10(ED) Myr")
-
-pline_ednode4 <- ggplot(data=df_phylo4,aes(x=log(age+1,10),y=log(node_ED,10),color = rank))+
-  geom_point(aes(shape = Group, color=rank,size = Group))+theme_classic()+scale_shape_manual(values = c("Bifurcating Node without Date"=1,"Dated Node" = 19,"Resolved Node" = 13,"Leaf" = 1))+
-  scale_size_manual(values= c("Resolved Node"=4, "Bifurcating Node without Date"=5,"Dated Node"=8,"Leaf" = 8))+geom_line(aes(color=rank))+scale_color_manual(values=c(No.16= "#c74546",No.17= "#ea9c9d",No.18="#fdc58f",
-   No.19= "#99cbeb",No.20= "#4d97cd"))+xlab("log10(Node Date Estimate) Myr")+ylab("Log10(ED) Myr")
-
-Fig_S6 <- ggarrange(pline_ednode1,pline_ednode2,pline_ednode3,pline_ednode4,labels = (""),ncol = 2, nrow = 2)+ border()
-Fig_S7 <- ggarrange(pline_edge1,pline_edge2,pline_edge3,pline_edge4,labels = c("","",""),ncol = 2, nrow = 2)+ border()
 

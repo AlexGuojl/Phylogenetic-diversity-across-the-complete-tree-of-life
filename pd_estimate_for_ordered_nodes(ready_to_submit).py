@@ -7,7 +7,7 @@ import time
 from random import choice
 from random import choice
 from sklearn.model_selection import train_test_split
-os.chdir("/Users/alexgjl/Desktop/master/项目2/文件")#change to your own pathway
+os.chdir("/Users/alexgjl/Desktop/master/项目2/文件")
 
 def find_age_for_pd_estimate(a):#use the nodes_with_age table, "a" refers to a node id
     if a == -1:
@@ -71,6 +71,7 @@ def ed_node_realp(node_id): #all the id are nodes, so no need to use leaf_realpa
         ls_part = []
         ls_ed = []
         ind = 1
+        #####ccounter——times
         times = 0
         while ind < len(list_try):
             if float(find_age_for_pd_estimate(list_try[ind])) == 0:
@@ -102,7 +103,7 @@ def ed_node_realp(node_id): #all the id are nodes, so no need to use leaf_realpa
 
 ##check if parents younger than descendants!!!
 #based on a node id
-
+#no need to change
 def find_closest_parents_with_date_PD(a):##find closest node parents that have a date
     #based on a node id(a)
     cp = nodes_for_age_function.iat[int(a)-1,1]#current parents 
@@ -116,7 +117,7 @@ def find_closest_parents_with_date_PD(a):##find closest node parents that have a
 
 
 
-#一个parent的列表
+#a list of parent
 def find_parents_with_date_PD(node_id):##find closest node parents that have a date
     #based on a node id(a)
     list_try = []#list of parents
@@ -132,13 +133,18 @@ def find_parents_with_date_PD(node_id):##find closest node parents that have a d
     return([i for i in list_date if i > 0])
 
 
-def find_missing_PD(node_id):#checked accurate already!!
+
+
+
+
+def find_missing_PD(node_id):#
     if find_age_for_pd_estimate(node_id) > 0:
         return(float(4025-find_age_for_pd_estimate(node_id)))
     else:
-        df_des_node = df_nodes[df_nodes["parent"] == node_id]#This is the first generation of descendants - nodes with nodeid as parent. The purpose of this step is to find a close node date in order to estimate the branch length.
+        df_des_node = df_nodes[df_nodes["parent"] == node_id]#This is the first generation of nodes with node_id as parent
+                                                             #The purpose of this step is to find a close node date in order to estimate the branch length.
         ls_des_age = df_des_node["id"].apply(find_age_for_pd_estimate)#a list of age estimate
-        ls_des_age = sorted(ls_des_age,reverse = True)#largest node age
+        ls_des_age = sorted(ls_des_age,reverse = True)
         count_up = 0
         count_down = 0
         if ls_des_age == []:#most recent common ancestor already,start counting up
@@ -182,7 +188,8 @@ def find_missing_PD(node_id):#checked accurate already!!
             count_up += 1
             parent_for_node_id = nodes_for_age_function.iat[int(parent_for_node_id)-1,1]
             continue
-
+    #print(count_up)
+    #print(count_down)
     return(4025-node_date)
        
 
@@ -281,19 +288,25 @@ for row in nodes_for_age_function[nodes_for_age_function["age"]>0][1:].itertuple
 
 ##now a nodes table for pd estimate is prepared
 
-##check
+
 nodes_with_pd = df_nodes[['id', 'name', 'ott', 'parent', 'leaf_lft', 'leaf_rgt']]
 nodes_with_pd["richness"] = nodes_with_pd["leaf_rgt"]-nodes_with_pd["leaf_lft"]
 nodes_with_pd["richness"] = nodes_with_pd.apply(lambda x:x["richness"]+1, axis = 1)
 
 
 
-##ccalculate ed for the entire table
+##ccalculate ed for the entire table###
 nodes_with_pd["id"] = nodes_with_pd["id"].astype(int)
 pd_24 =nodes_with_pd.query("id == 1|id ==60673|id ==63780|id ==63336|id ==122046|id ==122046|id ==172687|id ==543115|id ==805308|id ==972346|id ==1082356|id ==1452621|id ==1595859|id ==1882225|id ==2056499|id ==840050|id ==840051|id ==840165|id ==841421|id ==875861|id ==889827|id ==889596|id ==889849|id ==884549 |id == 899851")
+
 pd_24["ED_from_previous_nodes"] = pd_24["id"].apply(ed_node_realp)
 pd_24["misadded_pd"] = pd_24["ED_from_previous_nodes"]*pd_24["richness"]
 pd_24["missing_pd"] = pd_24["id"].apply(find_missing_PD)
+
+#this part: total PD
+"""
+pd_24["missing_pd"] = pd_24["id"].apply(find_missing_PD)
+
 
 ls_of_pd_list24 = []
 for row in pd_24.itertuples():
@@ -309,21 +322,149 @@ for row in pd_24.itertuples():
         corrected_pd = i - misadded_pd+missing_pd #
         ls_pd.append(corrected_pd)#should be a list of 100 pd scores
     ls_of_pd_list24.append(ls_pd)
-
 pd_24["pd"] = ls_of_pd_list24
+
+
 df_pd = pd.DataFrame(pd_24, columns = ["pd"])
 
 pd_24["pd"] = pd_24["pd"].astype(str)
 pd_24["pd"] = pd_24["pd"].str.replace("[","")
 pd_24["pd"] = pd_24["pd"].str.replace("]","")
 
+
+
 ls_pdn = []
+                        
 for row in df_pd.itertuples():
     pd_list = (getattr(row,"pd"))
-    ls_pdn.append(pd_list.split(","))                      
+    ls_pdn.append(pd_list.split(","))
+
+                        
 df_pd["pd"] = ls_pdn
                         
 df_pd1 = df_pd["pd"].apply(pd.Series, index = list(range(0,100)))
 df_pd1["median_PD"]=  df_pd1.median(axis=1)
+
 pd_24 = pd.DataFrame(pd_24,columns = ['id', 'name', 'ott',  'richness', 'ED_from_previous_nodes', 'missing_pd', 'misadded_pd', 'pd'])
-pd_24_final = pd.concat(pd_24,df_pd1)
+
+pd_24_final = pd.concat([pd_24,df_pd1],axis = 1)
+
+pd_24_final.to_csv("pd_24(real_parent).csv",encoding = "gbk")
+
+"""
+
+
+#do a "unique PD" estimation
+#calculate the unique PD includes a short branch connects the most recent commen ancestor of this clade and its parent node!
+
+
+#the node_id here should be the parent node of the most recent commen ancestor
+#this function returns only the age of parent node
+
+#unique_PD = Total_PD - 4025 + age_for_unique_short_branch(node_id);
+
+#the unique PD of a given clade should include all branches subtending to the most recent common ancestor of this clade, and a unique short branch connects this ancestor node and its parent
+
+#this function returns the node date estimate of this parent
+def age_for_unique_short_branch(node_id2):#
+    node_id = pd_24.loc[pd_24['id'] == node_id2, 'parent'].values[0]
+    if find_age_for_pd_estimate(node_id) > 0:
+        return(float(find_age_for_pd_estimate(node_id)))
+    else:
+        df_des_node = df_nodes[df_nodes["parent"] == node_id]
+        ls_des_age = df_des_node["id"].apply(find_age_for_pd_estimate)#a list of age estimate
+        ls_des_age = sorted(ls_des_age,reverse = True)
+        count_up = 0
+        count_down = 0
+        if ls_des_age == []:#most recent common ancestor already,start counting up
+            ls_des_age.append(0)
+            count_down += 1
+        if max(ls_des_age) > 0:
+            count_down += 1
+        else:
+            #print("keep finding")
+            while True:
+                df_des_node= df_nodes[df_nodes["parent"].isin(list(df_des_node["id"]))]
+                ls_des_age = df_des_node["id"].apply(find_age_for_pd_estimate)
+                ls_des_age = sorted(ls_des_age,reverse = True)
+                count_down += 1
+
+                if ls_des_age == []:
+                    ls_des_age.append(0)
+                    count_down += 1
+                    break
+                if max(ls_des_age)== 0:
+                    count_down += 1
+                    continue
+                if max(ls_des_age) > 0:
+                    count_down += 1
+
+                    break
+    #print(count_down)
+    #return(ls_des_age)
+    parent_for_node_id = nodes_for_age_function.iat[int(node_id)-1,1]
+    while True:
+        if find_age_for_pd_estimate(parent_for_node_id) > 0:
+            count_up += 1
+        #now, calculate!
+            BL = (find_age_for_pd_estimate(parent_for_node_id)-max(ls_des_age))/(count_up+count_down)
+    #print(BL)
+            node_date = find_age_for_pd_estimate(parent_for_node_id)-BL*count_up
+            break
+        else:
+            count_up += 1
+            parent_for_node_id = nodes_for_age_function.iat[int(parent_for_node_id)-1,1]
+            continue
+    #print(count_up)
+    #print(count_down)
+    return(node_date)
+
+pd_23 = pd_24[1:]
+ls_of_parent_age = pd_23["id"].apply(age_for_unique_short_branch)
+pd_23["parent_age"] = ls_of_parent_age
+
+ls_of_unique_pd_list23 = []
+
+for row in pd_23.itertuples():
+    misadded_pd = getattr(row,"misadded_pd")
+    missing_pd = getattr(row,"missing_pd")
+    parent_age =  getattr(row,"parent_age")
+    lft = getattr(row,"leaf_lft")
+    rgt = getattr(row,"leaf_rgt")
+    ed_ranged = ed_values[lft-1:rgt]#index = leaf_id - 1
+    sum_ed = list(ed_ranged.apply(lambda x: x.sum(), axis = 0))###sum of ed scores
+    ##axis = 0:rows
+    ls_pd = []
+    for i in sum_ed:
+        corrected_pd = i - misadded_pd+missing_pd-4025+parent_age
+        ls_pd.append(corrected_pd)#should be a list of 100 pd scores
+    ls_of_unique_pd_list23.append(ls_pd)
+pd_23["pd"] = ls_of_unique_pd_list23
+
+
+df_unique_pd = pd.DataFrame(pd_23, columns = ["pd"])
+
+pd_23["pd"] = pd_23["pd"].astype(str)
+pd_23["pd"] = pd_23["pd"].str.replace("[","")
+pd_23["pd"] = pd_23["pd"].str.replace("]","")
+
+
+def split_list_to_columns(row):
+    return pd.Series(row['pd'])
+
+unique_pd_split = df_unique_pd.apply(split_list_to_columns, axis=1)
+
+df_unique_pd = pd.concat([df_unique_pd, unique_pd_split], axis=1)
+
+df_unique_pd = df_unique_pd.drop(df_unique_pd.columns[0], axis=1)
+
+df_unique_pd["median_PD"]=  df_unique_pd.median(axis=1)
+df_unique_pd["median_PD"]=  df_unique_pd.median(axis=1)
+
+
+pd_23 = pd.DataFrame(pd_23,columns = ['id', 'name', 'ott',  'richness', 'ED_from_previous_nodes', 'missing_pd', 'misadded_pd', 'pd'])
+pd_23_final = pd.concat([pd_23,df_unique_pd],axis = 1)
+
+
+
+

@@ -1,5 +1,6 @@
 #threatened pd for certain clades(jawed vertebrates and tetrapods)
 
+
 import pandas as pd
 import numpy as np
 import os
@@ -31,7 +32,7 @@ def find_des(a): ##return 1/descendants for a node id in the whole table
     else:
         return(1/(df_nodes.iloc[a-1,6]-df_nodes.iloc[a-1,5]+1))
 
-
+#a list of parent
 def find_parents_with_date_PD(node_id):##find closest node parents that have a date
     #based on a node id(a)
     list_try = []#list of parents
@@ -74,6 +75,7 @@ def ed_terminal(leaf_id):###try must be sorted from big to small
     return (ed_terminal)
 
 
+ ##only to nodes that directly connect to leaves!
 def node_terminal(node_id):###checked correct
     if find_age_for_pd_estimate(node_id)>0:
         return (find_age_for_pd_estimate(node_id))
@@ -129,8 +131,10 @@ def ed_node_realp(node_id): #all the id are nodes, so no need to use leaf_realpa
                 ls_des = []
     #print(ls_ed)
         return(float(format(sum(ls_ed),'.6f')))
+ 
     if find_age_for_pd_estimate(node_id) == 0:
-        df_des_node = df_nodes[df_nodes["parent"] == node_id]
+        df_des_node = df_nodes[df_nodes["parent"] == node_id]#This is the first generation of nodes with node_id as parent
+        #The purpose of this step is to find a close node date in order to estimate the branch length.
         ls_des_age = df_des_node["id"].apply(find_age_for_pd_estimate)
         ls_des_age = sorted(ls_des_age,reverse = True)
         count = 0
@@ -171,7 +175,7 @@ def ed_node_realp(node_id): #all the id are nodes, so no need to use leaf_realpa
             if float(find_age_for_pd_estimate(list_try[ind])) > 0:
                 ls_part.append(list_try[ind])
                 ls_des.append(find_des(list_try[ind-1]))
-                if find_age_for_pd_estimate(list_try[ind-len(ls_part)]) == 0:#第一次出现age>0的情况
+                if find_age_for_pd_estimate(list_try[ind-len(ls_part)]) == 0:
                     ed_temp = ((find_age_for_pd_estimate(list_try[ind])-ls_des_age[0])/(len(ls_part)+count))*sum(ls_des)
                     ls_ed.append(ed_temp)
                     ind += 1
@@ -201,6 +205,8 @@ def sum_ed_clade(node_id):
     ed_ranged = ed_values[lft-1:rgt]
     sum_ed = list(ed_ranged.apply(lambda x: x.sum(), axis = 0))
     return(sum_ed)
+
+
 
 def interial_branch_length(node_id): #all the id are nodes, so no need to use leaf_realparent
     if find_age_for_pd_estimate(node_id)>0:
@@ -259,13 +265,17 @@ def interial_branch_length(node_id): #all the id are nodes, so no need to use le
 
 
 
-def threatened_pd_tes1(node_id):
+def threatened_pd(node_id,dataframe):
     ls_pdnode = []
+    #all descendants of this node
     ls_alldes = find_all_descendants_node(node_id)
-    if set(ls_alldes).issubset(set(list(df_tes1["id"]))):
+    #Determine whether this list is a subset of list(df_parent["id"])_#If it is:
+    if set(ls_alldes).issubset(set(list(dataframe["id"]))):
+     #find node parent
         node_parent = find_closest_parent_node(node_id)
         ls_alldes2 = find_all_descendants_node(node_parent)
-        if set(ls_alldes2).issubset(set(list(df_tes1["id"]))):
+    #Get all its descendants through list(range()) and determine whether this list is a subset of threatened_leaves
+        if set(ls_alldes2).issubset(set(list(dataframe["id"]))):
             ls_pdnode.append(0)
             return(sum(ls_pdnode))
         else:
@@ -274,302 +284,34 @@ def threatened_pd_tes1(node_id):
             threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
             ls_pdnode.append(threatened_pd)
             return(sum(ls_pdnode))
+    #if not
     else:
+         #threatened pd of this node is the Terminal Branch Length 
         ls_pdnode.append(node_terminal(node_id))
         return(sum(ls_pdnode))
 
-def threatened_pd_tes2(node_id):
-    ls_pdnode = []
-    ls_alldes = find_all_descendants_node(node_id)
-    if set(ls_alldes).issubset(set(list(df_tes2["id"]))):
-        node_parent = find_closest_parent_node(node_id)
-        ls_alldes2 = find_all_descendants_node(node_parent)
-        if set(ls_alldes2).issubset(set(list(df_tes2["id"]))):
-            ls_pdnode.append(0)
-            return(sum(ls_pdnode))
-        else:
-            lft = nodes1.iloc[node_id-1,5]
-            rgt = nodes1.iloc[node_id-1,6]
-            threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
-            ls_pdnode.append(threatened_pd)
-            return(sum(ls_pdnode))
-    else:
-        ls_pdnode.append(node_terminal(node_id))
-        return(sum(ls_pdnode))
-    
-#squ,act,cho,cro,amp
-def threatened_pd_squ1(node_id):
-    ls_pdnode = []
-    ls_alldes = find_all_descendants_node(node_id)
-    if set(ls_alldes).issubset(set(list(df_squ1["id"]))):
-        node_parent = find_closest_parent_node(node_id)
-        ls_alldes2 = find_all_descendants_node(node_parent)
-        if set(ls_alldes2).issubset(set(list(df_squ1["id"]))):
-            ls_pdnode.append(0)
-            return(sum(ls_pdnode))
-        else:
-            lft = nodes1.iloc[node_id-1,5]
-            rgt = nodes1.iloc[node_id-1,6]
-            threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
-            ls_pdnode.append(threatened_pd)
-            return(sum(ls_pdnode))
-    else:
-        ls_pdnode.append(node_terminal(node_id))
-        return(sum(ls_pdnode))
-
-def threatened_pd_squ2(node_id):
-    ls_pdnode = []
-    ls_alldes = find_all_descendants_node(node_id)
-    if set(ls_alldes).issubset(set(list(df_squ2["id"]))):
-        node_parent = find_closest_parent_node(node_id)
-        ls_alldes2 = find_all_descendants_node(node_parent)
-        if set(ls_alldes2).issubset(set(list(df_squ2["id"]))):
-            ls_pdnode.append(0)
-            return(sum(ls_pdnode))
-        else:
-            lft = nodes1.iloc[node_id-1,5]
-            rgt = nodes1.iloc[node_id-1,6]
-            threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
-            ls_pdnode.append(threatened_pd)
-            return(sum(ls_pdnode))
-    else:
-        ls_pdnode.append(node_terminal(node_id))
-        return(sum(ls_pdnode))
-
-def threatened_pd_act1(node_id):
-    ls_pdnode = []
-    ls_alldes = find_all_descendants_node(node_id)
-    if set(ls_alldes).issubset(set(list(df_act1["id"]))):
-        node_parent = find_closest_parent_node(node_id)
-        ls_alldes2 = find_all_descendants_node(node_parent)
-        if set(ls_alldes2).issubset(set(list(df_act1["id"]))):
-            ls_pdnode.append(0)
-            return(sum(ls_pdnode))
-        else:
-            lft = nodes1.iloc[node_id-1,5]
-            rgt = nodes1.iloc[node_id-1,6]
-            threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
-            ls_pdnode.append(threatened_pd)
-            return(sum(ls_pdnode))
-    else:
-        ls_pdnode.append(node_terminal(node_id))
-        return(sum(ls_pdnode))
-
-def threatened_pd_act2(node_id):
-    ls_pdnode = []
-    ls_alldes = find_all_descendants_node(node_id)
-    if set(ls_alldes).issubset(set(list(df_act2["id"]))):
-        node_parent = find_closest_parent_node(node_id)
-        ls_alldes2 = find_all_descendants_node(node_parent)
-        if set(ls_alldes2).issubset(set(list(df_act2["id"]))):
-            ls_pdnode.append(0)
-            return(sum(ls_pdnode))
-        else:
-            lft = nodes1.iloc[node_id-1,5]
-            rgt = nodes1.iloc[node_id-1,6]
-            threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
-            ls_pdnode.append(threatened_pd)
-            return(sum(ls_pdnode))
-    else:
-        ls_pdnode.append(node_terminal(node_id))
-        return(sum(ls_pdnode))
-
-
-def threatened_pd_cho1(node_id):
-    ls_pdnode = []
-    ls_alldes = find_all_descendants_node(node_id)
-    if set(ls_alldes).issubset(set(list(df_cho1["id"]))):
-        node_parent = find_closest_parent_node(node_id)
-        ls_alldes2 = find_all_descendants_node(node_parent)
-        if set(ls_alldes2).issubset(set(list(df_cho1["id"]))):
-            ls_pdnode.append(0)
-            return(sum(ls_pdnode))
-        else:
-            lft = nodes1.iloc[node_id-1,5]
-            rgt = nodes1.iloc[node_id-1,6]
-            threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
-            ls_pdnode.append(threatened_pd)
-            return(sum(ls_pdnode))
-    else:
-        ls_pdnode.append(node_terminal(node_id))
-        return(sum(ls_pdnode))
-
-def threatened_pd_cho2(node_id):
-    ls_pdnode = []
-    ls_alldes = find_all_descendants_node(node_id)
-    if set(ls_alldes).issubset(set(list(df_cho2["id"]))):
-        node_parent = find_closest_parent_node(node_id)
-        ls_alldes2 = find_all_descendants_node(node_parent)
-        if set(ls_alldes2).issubset(set(list(df_cho2["id"]))):
-            ls_pdnode.append(0)
-            return(sum(ls_pdnode))
-        else:
-            lft = nodes1.iloc[node_id-1,5]
-            rgt = nodes1.iloc[node_id-1,6]
-            threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
-            ls_pdnode.append(threatened_pd)
-            return(sum(ls_pdnode))
-    else:
-        ls_pdnode.append(node_terminal(node_id))
-        return(sum(ls_pdnode))
-
-def threatened_pd_cro1(node_id):
-    ls_pdnode = []
-    ls_alldes = find_all_descendants_node(node_id)
-    if set(ls_alldes).issubset(set(list(df_cro1["id"]))):
-        node_parent = find_closest_parent_node(node_id)
-        ls_alldes2 = find_all_descendants_node(node_parent)
-        if set(ls_alldes2).issubset(set(list(df_cro1["id"]))):
-            ls_pdnode.append(0)
-            return(sum(ls_pdnode))
-        else:
-            lft = nodes1.iloc[node_id-1,5]
-            rgt = nodes1.iloc[node_id-1,6]
-            threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
-            ls_pdnode.append(threatened_pd)
-            return(sum(ls_pdnode))
-    else:
-        ls_pdnode.append(node_terminal(node_id))
-        return(sum(ls_pdnode))
-
-def threatened_pd_cro2(node_id):
-    ls_pdnode = []
-    ls_alldes = find_all_descendants_node(node_id)
-    if set(ls_alldes).issubset(set(list(df_cro2["id"]))):
-        node_parent = find_closest_parent_node(node_id)
-        ls_alldes2 = find_all_descendants_node(node_parent)
-        if set(ls_alldes2).issubset(set(list(df_cro2["id"]))):
-            ls_pdnode.append(0)
-            return(sum(ls_pdnode))
-        else:
-            lft = nodes1.iloc[node_id-1,5]
-            rgt = nodes1.iloc[node_id-1,6]
-            threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
-            ls_pdnode.append(threatened_pd)
-            return(sum(ls_pdnode))
-    else:
-        ls_pdnode.append(node_terminal(node_id))
-        return(sum(ls_pdnode))
-
-def threatened_pd_amp1(node_id):
-    ls_pdnode = []
-    ls_alldes = find_all_descendants_node(node_id)
-    if set(ls_alldes).issubset(set(list(df_amp1["id"]))):
-        node_parent = find_closest_parent_node(node_id)
-        ls_alldes2 = find_all_descendants_node(node_parent)
-        if set(ls_alldes2).issubset(set(list(df_amp1["id"]))):
-            ls_pdnode.append(0)
-            return(sum(ls_pdnode))
-        else:
-            lft = nodes1.iloc[node_id-1,5]
-            rgt = nodes1.iloc[node_id-1,6]
-            threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
-            ls_pdnode.append(threatened_pd)
-            return(sum(ls_pdnode))
-    else:
-        ls_pdnode.append(node_terminal(node_id))
-        return(sum(ls_pdnode))
-def threatened_pd_amp2(node_id):
-    ls_pdnode = []
-    ls_alldes = find_all_descendants_node(node_id)
-    if set(ls_alldes).issubset(set(list(df_amp2["id"]))):
-        node_parent = find_closest_parent_node(node_id)
-        ls_alldes2 = find_all_descendants_node(node_parent)
-        if set(ls_alldes2).issubset(set(list(df_amp2["id"]))):
-            ls_pdnode.append(0)
-            return(sum(ls_pdnode))
-        else:
-            lft = nodes1.iloc[node_id-1,5]
-            rgt = nodes1.iloc[node_id-1,6]
-            threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
-            ls_pdnode.append(threatened_pd)
-            return(sum(ls_pdnode))
-    else:
-        ls_pdnode.append(node_terminal(node_id))
-        return(sum(ls_pdnode))
-
-
-
-def threatened_pd_mam1(node_id):
-    ls_pdnode = []
-    ls_alldes = find_all_descendants_node(node_id)
-    if set(ls_alldes).issubset(set(list(df_mam1["id"]))):
-        node_parent = find_closest_parent_node(node_id)
-        ls_alldes2 = find_all_descendants_node(node_parent)
-        if set(ls_alldes2).issubset(set(list(df_mam1["id"]))):
-            ls_pdnode.append(0)
-            return(sum(ls_pdnode))
-        else:
-            lft = nodes1.iloc[node_id-1,5]
-            rgt = nodes1.iloc[node_id-1,6]
-            threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
-            ls_pdnode.append(threatened_pd)
-            return(sum(ls_pdnode))
-    else:
-        ls_pdnode.append(node_terminal(node_id))
-        return(sum(ls_pdnode))
 
     
-def threatened_pd_mam2(node_id):
-    ls_pdnode = []
-    ls_alldes = find_all_descendants_node(node_id)
-    if set(ls_alldes).issubset(set(list(df_mam2["id"]))):
-        node_parent = find_closest_parent_node(node_id)
-        ls_alldes2 = find_all_descendants_node(node_parent)
-        if set(ls_alldes2).issubset(set(list(df_mam2["id"]))):
-            ls_pdnode.append(0)
-            return(sum(ls_pdnode))
-        else:
-            lft = nodes1.iloc[node_id-1,5]
-            rgt = nodes1.iloc[node_id-1,6]
-            threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
-            ls_pdnode.append(threatened_pd)
-            return(sum(ls_pdnode))
-    else:
-        ls_pdnode.append(node_terminal(node_id))
-        return(sum(ls_pdnode))
+"""
+df_tet1 = pd.read_csv("threatened_tet.csv",low_memory=False)
+df_jaw1 = pd.read_csv("threatened_jawed.csv",low_memory=False)
 
-def threatened_pd_ave1(node_id):
-    ls_pdnode = []
-    ls_alldes = find_all_descendants_node(node_id)
-    if set(ls_alldes).issubset(set(list(df_ave1["id"]))):
-        node_parent = find_closest_parent_node(node_id)
-        ls_alldes2 = find_all_descendants_node(node_parent)
-        if set(ls_alldes2).issubset(set(list(df_ave1["id"]))):
-            ls_pdnode.append(0)
-            return(sum(ls_pdnode))
-        else:
-            lft = nodes1.iloc[node_id-1,5]
-            rgt = nodes1.iloc[node_id-1,6]
-            threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
-            ls_pdnode.append(threatened_pd)
-            return(sum(ls_pdnode))
-    else:
-        ls_pdnode.append(node_terminal(node_id))
-        return(sum(ls_pdnode))
-
-def threatened_pd_ave2(node_id):
-    ls_pdnode = []
-    ls_alldes = find_all_descendants_node(node_id)
-    if set(ls_alldes).issubset(set(list(df_ave2["id"]))):
-        node_parent = find_closest_parent_node(node_id)
-        ls_alldes2 = find_all_descendants_node(node_parent)
-        if set(ls_alldes2).issubset(set(list(df_ave2["id"]))):
-            ls_pdnode.append(0)
-            return(sum(ls_pdnode))
-        else:
-            lft = nodes1.iloc[node_id-1,5]
-            rgt = nodes1.iloc[node_id-1,6]
-            threatened_pd = sum_ed_clade(node_id) - (ed_node_realp(node_id)*(rgt-lft+1))+interial_branch_length(node_id)
-            ls_pdnode.append(threatened_pd)
-            return(sum(ls_pdnode))
-    else:
-        ls_pdnode.append(node_terminal(node_id))
-        return(sum(ls_pdnode))
-
+df_tet2 = pd.read_csv("threatened_tet_with_DD.csv",low_memory=False)
+df_jaw2 = pd.read_csv("threatened_jawed_with_DD.csv",low_memory=False)
+"""
 getparent = pd.DataFrame(leaves1,columns = ["id","parent","real_parent"])
 
 df_tes1 = pd.read_csv("threatened_test.csv",low_memory=False)
+
+
+##has been updated with the latest json data
+nodes_no_age = pd.DataFrame(nodes,columns = ["Unnamed: 0","id","parent","leaf_lft","leaf_rgt","unnamed:0"])
+
+##always been updated with the latest json data
+ages = pd.read_csv("latest_node_dates(real_parent_only).csv", low_memory=False)
+
+
+"""
 df_tes1=df_tes1[df_tes1["status_code"] != "NT"]
 
 df_tes2 = pd.read_csv("threatened_test_with_DD.csv",low_memory=False)
@@ -617,6 +359,7 @@ df_ave2=df_ave2[df_ave2["status_code"] != "NT"]
 
 
 
+
 df_mam1 = pd.merge(df_mam1,getparent,how = "left",on = "id")
 df_mam2 = pd.merge(df_mam2,getparent,how = "left",on = "id")
 df_ave1 = pd.merge(df_ave1,getparent,how = "left",on = "id")
@@ -652,13 +395,6 @@ df_parent_mam2 = pd.DataFrame({"parent": list(set(list(df_mam2["parent"])))})
 df_parent_ave1 = pd.DataFrame({"parent": list(set(list(df_ave1["parent"])))})
 df_parent_ave2 = pd.DataFrame({"parent": list(set(list(df_ave2["parent"])))})
 
-
-
-nodes_no_age = pd.DataFrame(nodes,columns = ["Unnamed: 0","id","parent","leaf_lft","leaf_rgt","unnamed:0"])
-
-##always been updated with the latest json data
-ages = pd.read_csv("latest_node_dates(real_parent_only).csv", low_memory=False)
-
 ls_tes1 = []
 ls_squ1 = []
 ls_act1 = []
@@ -677,12 +413,14 @@ ls_mam1 = []
 ls_mam2 = []
 ls_ave1 = []
 ls_ave2 = []
+"""
 
 
-start_time = time.time()
-currentDateAndTime = datetime.now()
+
+#start_time = time.time()
+#currentDateAndTime = datetime.now()
 # print(currentDateAndTime.strftime("%H:%M:%S")) 
-ages_selected = ages #.sample(frac=0.5, replace=False, random_state = None)
+ages_selected = ages 
 #choose one if a node has several date estimates
 ls_age  = []
 for row in ages_selected.itertuples():
@@ -733,90 +471,192 @@ for row in ages_bootstrap_final[ages_bootstrap_final["age"]>0][1:].itertuples():
                         ls_chose = []
             i+=1
 
+####
+#select the 24 groups
+
+df_iucn1 = pd.read_csv("all_iucn_ranked_species.csv",low_memory=False)
+df_iucn2 = df_iucn1[df_iucn1["status_code"] != "LC"]
+all_threatened = df_iucn2[df_iucn2["status_code"] != "NT"]
+all_threatened = all_threatened[all_threatened["status_code"] != "DD"]#skip this skip will give threatened PD in a worse situation in which all DD are regarded as threatened
+all_threatened = pd.merge(all_threatened,getparent,how = "left",on = "id")
+th_biota = all_threatened
+th_euk = all_threatened[all_threatened["id"] > 59642]
+th_met = all_threatened[all_threatened["id"] >805307]
+th_hol = all_threatened[(all_threatened["id"]>543113)&(all_threatened["id"]<804914)]
+th_chl = all_threatened[(all_threatened["id"]>122044)&(all_threatened["id"]<541348)]
+th_spe = all_threatened[(all_threatened["id"]>172685)&(all_threatened["id"]<541348)]
+th_dia = all_threatened[(all_threatened["id"]>63334)&(all_threatened["id"]<541348)]
+th_tsa = all_threatened[(all_threatened["id"]>63777)&(all_threatened["id"]<112742)]
+th_mol = all_threatened[(all_threatened["id"]>972344)&(all_threatened["id"]<1061704)]
+th_che =all_threatened[(all_threatened["id"]>1082354)&(all_threatened["id"]<1175804)]
+th_hym = all_threatened[(all_threatened["id"]>1452619)&(all_threatened["id"]<1588532)]
+th_dip = all_threatened[(all_threatened["id"]>1882223)&(all_threatened["id"]<2043133)]
+th_lep = all_threatened[all_threatened["id"]>2056498]
+th_col = all_threatened[(all_threatened["id"]>1595857)&(all_threatened["id"]<1879264)]
+th_vert = all_threatened[(all_threatened["id"]>840048)&(all_threatened["id"]<910759)]
+th_agn = all_threatened[(all_threatened["id"]>840048)&(all_threatened["id"]<840163)]
+th_chon =all_threatened[(all_threatened["id"]>840162)&(all_threatened["id"]<841419)]
+th_oste = all_threatened[(all_threatened["id"]>841418)&(all_threatened["id"]<875851)]
+th_amph = all_threatened[(all_threatened["id"]>875858)&(all_threatened["id"]<884547)]
+th_croc = all_threatened[(all_threatened["id"]>889823)&(all_threatened["id"]<889847)]
+th_test = all_threatened[(all_threatened["id"]>889592)&(all_threatened["id"]<889824)]
+th_squa = all_threatened[(all_threatened["id"]>899849)&(all_threatened["id"]<910759)]
+th_mam =all_threatened[(all_threatened["id"]>884546)&(all_threatened["id"]<889593)]
+th_ave = all_threatened[(all_threatened["id"]>889846)&(all_threatened["id"]<899849)]
 
 
-ls_threatened_pd_tes1  = df_parent_tes1["parent"].apply(threatened_pd_tes1)
-ls_threatened_pd_tes2  = df_parent_tes2["parent"].apply(threatened_pd_tes2)
-ls_threatened_pd_squ1  = df_parent_squ1["parent"].apply(threatened_pd_squ1)
-ls_threatened_pd_squ2  = df_parent_squ2["parent"].apply(threatened_pd_squ2)
-ls_threatened_pd_act1  = df_parent_act1["parent"].apply(threatened_pd_act1)
-ls_threatened_pd_act2  = df_parent_act2["parent"].apply(threatened_pd_act2)
-ls_threatened_pd_cho1  = df_parent_cho1["parent"].apply(threatened_pd_cho1)
-ls_threatened_pd_cho2  = df_parent_cho2["parent"].apply(threatened_pd_cho2)
-ls_threatened_pd_cro1  = df_parent_cro1["parent"].apply(threatened_pd_cro1)
-ls_threatened_pd_cro2  = df_parent_cro2["parent"].apply(threatened_pd_cro2)
-ls_threatened_pd_amp1  = df_parent_amp1["parent"].apply(threatened_pd_amp1)
-ls_threatened_pd_amp2  = df_parent_amp2["parent"].apply(threatened_pd_amp2)
+th_parent_biota = pd.DataFrame({"parent": list(set(list(th_biota["parent"])))})
+th_parent_euk = pd.DataFrame({"parent": list(set(list(th_euk["parent"])))})
+th_parent_met = pd.DataFrame({"parent": list(set(list(th_met["parent"])))})
+th_parent_hol = pd.DataFrame({"parent": list(set(list(th_hol["parent"])))})
+th_parent_chl = pd.DataFrame({"parent": list(set(list(th_chl["parent"])))})
+th_parent_spe = pd.DataFrame({"parent": list(set(list(th_spe["parent"])))})
+th_parent_dia = pd.DataFrame({"parent": list(set(list(th_dia["parent"])))})
+th_parent_tsa = pd.DataFrame({"parent": list(set(list(th_tsa["parent"])))})
+th_parent_mol = pd.DataFrame({"parent": list(set(list(th_mol["parent"])))})
+th_parent_che = pd.DataFrame({"parent": list(set(list(th_che["parent"])))})
 
-ls_threatened_pd_mam1  = df_parent_mam1["parent"].apply(threatened_pd_mam1)
-ls_threatened_pd_mam2  = df_parent_mam2["parent"].apply(threatened_pd_mam2)
-ls_threatened_pd_ave1  = df_parent_mam1["parent"].apply(threatened_pd_ave1)
-ls_threatened_pd_ave2  = df_parent_mam1["parent"].apply(threatened_pd_ave2)
-
-ls_mam1.append(sum(ls_threatened_pd_mam1))
-ls_mam2.append(sum(ls_threatened_pd_mam2))
-ls_ave1.append(sum(ls_threatened_pd_ave1))
-ls_ave2.append(sum(ls_threatened_pd_ave2))
-
-
-ls_tes1.append(sum(ls_threatened_pd_tes1))
-ls_squ1.append(sum(ls_threatened_pd_squ1))
-ls_act1.append(sum(ls_threatened_pd_act1)) 
-ls_cho1.append(sum(ls_threatened_pd_cho1))
-ls_cro1.append(sum(ls_threatened_pd_cro1))
-ls_amp1.append(sum(ls_threatened_pd_amp1))
-
-ls_tes2.append(sum(ls_threatened_pd_tes2))
-ls_squ2.append(sum(ls_threatened_pd_squ2))
-ls_act2.append(sum(ls_threatened_pd_act2))
-ls_cho2.append(sum(ls_threatened_pd_cho2))
-ls_cro2.append(sum(ls_threatened_pd_cro2))
-ls_amp2.append(sum(ls_threatened_pd_amp2))
+th_parent_hym = pd.DataFrame({"parent": list(set(list(th_hym["parent"])))})
+th_parent_dip = pd.DataFrame({"parent": list(set(list(th_dip["parent"])))})
+th_parent_lep = pd.DataFrame({"parent": list(set(list(th_lep["parent"])))})
+th_parent_vert = pd.DataFrame({"parent": list(set(list(th_vert["parent"])))})
+th_parent_col = pd.DataFrame({"parent": list(set(list(th_col["parent"])))})
+th_parent_agna = pd.DataFrame({"parent": list(set(list(th_agn["parent"])))})
+th_parent_chon = pd.DataFrame({"parent": list(set(list(th_chon["parent"])))})
+th_parent_oste = pd.DataFrame({"parent": list(set(list(th_oste["parent"])))})
+th_parent_amph = pd.DataFrame({"parent": list(set(list(th_amph["parent"])))})
+th_parent_croc = pd.DataFrame({"parent": list(set(list(th_croc["parent"])))})
+th_parent_test = pd.DataFrame({"parent": list(set(list(th_test["parent"])))})
+th_parent_squa = pd.DataFrame({"parent": list(set(list(th_squa["parent"])))})
+th_parent_mam = pd.DataFrame({"parent": list(set(list(th_mam["parent"])))})
+th_parent_ave = pd.DataFrame({"parent": list(set(list(th_ave["parent"])))})
 
 
+###
+
+ls_threatened_pd_biota  = th_parent_biota['parent'].apply(lambda x, th_biota: threatened_pd(x,th_biota ), args=(th_biota,))
+ls_threatened_pd_euk  = th_parent_euk['parent'].apply(lambda x, th_euk: threatened_pd(x,th_euk ), args=(th_euk,))
+ls_threatened_pd_met  = th_parent_met['parent'].apply(lambda x, th_met: threatened_pd(x,th_met ), args=(th_met,))
+ls_threatened_pd_hol  = th_parent_hol['parent'].apply(lambda x, th_hol: threatened_pd(x,th_hol ), args=(th_hol,))
+ls_threatened_pd_chl = th_parent_chl['parent'].apply(lambda x, th_chl: threatened_pd(x,th_chl ), args=(th_chl,))
+ls_threatened_pd_spe  = th_parent_spe['parent'].apply(lambda x, th_spe: threatened_pd(x,th_spe ), args=(th_spe,))
+ls_threatened_pd_dia  = th_parent_dia['parent'].apply(lambda x, th_dia: threatened_pd(x,th_dia ), args=(th_dia,))
+ls_threatened_pd_tsa  = th_parent_tsa['parent'].apply(lambda x, th_tsa: threatened_pd(x,th_tsa ), args=(th_tsa,))
+ls_threatened_pd_mol  = th_parent_mol['parent'].apply(lambda x, th_mol: threatened_pd(x,th_mol ), args=(th_mol,))
+ls_threatened_pd_che  = th_parent_che['parent'].apply(lambda x, th_che: threatened_pd(x,th_che ), args=(th_che,))
+ls_threatened_pd_hym  = th_parent_hym['parent'].apply(lambda x, th_hym: threatened_pd(x,th_hym ), args=(th_hym,))
+ls_threatened_pd_dip  = th_parent_dip['parent'].apply(lambda x, th_dip: threatened_pd(x,th_dip ), args=(th_dip,))
+ls_threatened_pd_lep  = th_parent_lep['parent'].apply(lambda x, th_lep: threatened_pd(x,th_lep ), args=(th_lep,))
+ls_threatened_pd_col  = th_parent_col['parent'].apply(lambda x, th_col: threatened_pd(x,th_col ), args=(th_col,))
+ls_threatened_pd_vert  = th_parent_vert['parent'].apply(lambda x, th_vert: threatened_pd(x,th_vert ), args=(th_vert,))
+ls_threatened_pd_agna  = th_parent_agna['parent'].apply(lambda x, th_agn: threatened_pd(x,th_agn ), args=(th_agn,))
+ls_threatened_pd_chon  = th_parent_chon['parent'].apply(lambda x, th_chon: threatened_pd(x,th_chon ), args=(th_chon,))
+ls_threatened_pd_oste  = th_parent_oste['parent'].apply(lambda x, th_oste: threatened_pd(x,th_oste ), args=(th_oste,))
+ls_threatened_pd_amph  = th_parent_amph['parent'].apply(lambda x, th_amph: threatened_pd(x,th_amph ), args=(th_amph,))
+ls_threatened_pd_croc  = th_parent_croc['parent'].apply(lambda x, th_croc: threatened_pd(x,th_croc ), args=(th_croc,))
+ls_threatened_pd_test  = th_parent_test['parent'].apply(lambda x, th_test: threatened_pd(x,th_test ), args=(th_test,))
+ls_threatened_pd_squa  = th_parent_squa['parent'].apply(lambda x, th_squa: threatened_pd(x,th_squa ), args=(th_squa,))
+ls_threatened_pd_mam  = th_parent_mam['parent'].apply(lambda x, th_mam: threatened_pd(x,th_mam ), args=(th_mam,))
+ls_threatened_pd_ave  = th_parent_ave['parent'].apply(lambda x, th_ave: threatened_pd(x,th_ave ), args=(th_ave,))
 
 
-df_tes1 = pd.DataFrame(ls_tes1)
-df_tes1.to_csv("threatened_pdtestudines.csv",encoding = "gbk")
-df_tes2 = pd.DataFrame(ls_tes2)
-df_tes2.to_csv("threatened_pdtestudines_w.csv",encoding = "gbk")
 
-df_squ1 = pd.DataFrame(ls_squ1)
-df_squ1.to_csv("threatened_pdsquamata.csv",encoding = "gbk")
-df_squ2 = pd.DataFrame(ls_squ2)
-df_squ2.to_csv("threatened_pdsquamata_w.csv",encoding = "gbk")
+ls_bio = []
+ls_euk = []
+ls_met = []
+ls_holo = []
+ls_chl = []
+ls_spe = []
+ls_dia = []
+ls_tsa = []
+ls_mol = []
+ls_che = []
+ls_hym = []
+ls_dip = []
+ls_lep = []
+ls_vert = []
+ls_col = []
+ls_agna = []
+ls_chon = []
+ls_oste = []
+ls_amph = []
+ls_croc = []
+ls_test = []
+ls_squa = []
+ls_mam = []
+ls_ave = []
 
-df_act1 = pd.DataFrame(ls_act1)
-df_act1.to_csv("threatenedpd_ray_fin.csv",encoding = "gbk")
-df_act2 = pd.DataFrame(ls_act2)
-df_act2.to_csv("threatenedpd_ray_fin_w.csv",encoding = "gbk")
 
-df_cho1 = pd.DataFrame(ls_cho1)
-df_cho1.to_csv("threatenedpd_chond.csv",encoding = "gbk")
-df_cho2 = pd.DataFrame(ls_cho2)
-df_cho2.to_csv("threatenedpd_chond_w.csv",encoding = "gbk")
+ls_bio.append(sum(ls_threatened_pd_biota))
+ls_euk.append(sum(ls_threatened_pd_euk))
+ls_met.append(sum(ls_threatened_pd_met))
+ls_holo.append(sum(ls_threatened_pd_hol))
+ls_chl.append(sum(ls_threatened_pd_chl))
+ls_spe.append(sum(ls_threatened_pd_spe))
+ls_dia.append(sum(ls_threatened_pd_dia))
+ls_tsa.append(sum(ls_threatened_pd_tsa))
+ls_mol.append(sum(ls_threatened_pd_mol))
+ls_che.append(sum(ls_threatened_pd_che))
+ls_hym.append(sum(ls_threatened_pd_hym))
+ls_dip.append(sum(ls_threatened_pd_dip))
+ls_lep.append(sum(ls_threatened_pd_lep))
+ls_col.append(sum(ls_threatened_pd_col))
+ls_vert.append(sum(ls_threatened_pd_vert))
+ls_agna.append(sum(ls_threatened_pd_agna))
+ls_chon.append(sum(ls_threatened_pd_chon))
+ls_oste.append(sum(ls_threatened_pd_oste))
+ls_amph.append(sum(ls_threatened_pd_amph))
+ls_croc.append(sum(ls_threatened_pd_croc))
+ls_test.append(sum(ls_threatened_pd_test))
+ls_squa.append(sum(ls_threatened_pd_squa))
+ls_mam.append(sum(ls_threatened_pd_mam))
+ls_ave.append(sum(ls_threatened_pd_ave))
 
-df_cro1 = pd.DataFrame(ls_cro1)
-df_cro1.to_csv("threatenedpd_cro.csv",encoding = "gbk")
-df_cro2 = pd.DataFrame(ls_cro2)
-df_cro2.to_csv("threatenedpd_cro_w.csv",encoding = "gbk")
-
-df_amp1 = pd.DataFrame(ls_amp1)
-df_amp1.to_csv("threatenedpd_amp.csv",encoding = "gbk")
-df_amp2 = pd.DataFrame(ls_amp2)
-df_amp2.to_csv("threatenedpd_amp_w.csv",encoding = "gbk")
-
-df_mam1 = pd.DataFrame(ls_mam1)
-df_mam1.to_csv("threatenedpd_mammals.csv",encoding = "gbk")
-df_mam2 = pd.DataFrame(ls_mam2)
-df_mam2.to_csv("threatenedpd_mammals_w.csv",encoding = "gbk")
-
-df_ave1 = pd.DataFrame(ls_ave1)
-df_ave1.to_csv("threatenedpd_aves.csv",encoding = "gbk")
-df_ave2 = pd.DataFrame(ls_ave2)
-df_ave2.to_csv("threatenedpd_aves_w.csv",encoding = "gbk")
-
-end_time = time.time()
-print((end_time-start_time)/3600)
-print(currentDateAndTime.strftime("%H:%M:%S"))
-
+df_bio = pd.DataFrame(ls_bio)
+df_bio.to_csv("threatenedpd_biota.csv",encoding = "gbk")
+df_euk = pd.DataFrame(ls_euk)
+df_euk.to_csv("threatenedpd_euk.csv",encoding = "gbk")
+df_met = pd.DataFrame(ls_met)
+df_met.to_csv("threatenedpd_metazoa.csv",encoding = "gbk")
+df_holo = pd.DataFrame(ls_holo)
+df_holo.to_csv("threatenedpd_holomycota.csv",encoding = "gbk")
+df_chl = pd.DataFrame(ls_chl)
+df_chl.to_csv("threatenedpd_chl.csv",encoding = "gbk")
+df_spe = pd.DataFrame(ls_spe)
+df_spe.to_csv("threatenedpd_spe.csv",encoding = "gbk")
+df_dia = pd.DataFrame(ls_dia)
+df_dia.to_csv("threatenedpd_dia.csv",encoding = "gbk")
+df_tsa = pd.DataFrame(ls_tsa)
+df_tsa.to_csv("threatenedpd_tsa.csv",encoding = "gbk")
+df_mol = pd.DataFrame(ls_mol)
+df_mol.to_csv("threatenedpd_mol.csv",encoding = "gbk")
+df_che = pd.DataFrame(ls_che)
+df_che.to_csv("threatenedpd_che.csv",encoding = "gbk")
+df_hym = pd.DataFrame(ls_hym)
+df_hym.to_csv("threatenedpd_hym.csv",encoding = "gbk")
+df_dip = pd.DataFrame(ls_dip)
+df_dip.to_csv("threatenedpd_dip.csv",encoding = "gbk")
+df_lep = pd.DataFrame(ls_lep)
+df_lep.to_csv("threatenedpd_lep.csv",encoding = "gbk")
+df_col = pd.DataFrame(ls_col)
+df_col.to_csv("threatenedpd_col.csv",encoding = "gbk")
+df_vert = pd.DataFrame(ls_vert)
+df_vert.to_csv("threatenedpd_vert.csv",encoding = "gbk")
+df_agna = pd.DataFrame(ls_agna)
+df_agna.to_csv("threatenedpd_cyclostomata.csv",encoding = "gbk")
+df_chon = pd.DataFrame(ls_chon)
+df_chon.to_csv("threatenedpd_shark_ray.csv",encoding = "gbk")
+df_oste = pd.DataFrame(ls_oste)
+df_oste.to_csv("threatenedpd_bonyfish.csv",encoding = "gbk")
+df_amph = pd.DataFrame(ls_amph)
+df_amph.to_csv("threatenedpd_amph.csv",encoding = "gbk")
+df_croc = pd.DataFrame(ls_croc)
+df_croc.to_csv("threatenedpd_croc.csv",encoding = "gbk")
+df_test = pd.DataFrame(ls_test)
+df_test.to_csv("threatenedpd_test.csv",encoding = "gbk")
+df_squa = pd.DataFrame(ls_squa)
+df_squa.to_csv("threatenedpd_squa.csv",encoding = "gbk")
+df_mam = pd.DataFrame(ls_mam)
+df_mam.to_csv("threatenedpd_mam.csv",encoding = "gbk")
+df_ave = pd.DataFrame(ls_ave)
+df_ave.to_csv("threatenedpd_ave.csv",encoding = "gbk"))

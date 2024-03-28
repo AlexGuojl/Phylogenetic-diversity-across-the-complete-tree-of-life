@@ -1,5 +1,7 @@
 # Phylogenetic-Diversity-across-the-complete-tree-of-life
 
+Here I provide codes to run the functions, read in the original tables include ordered_leaves, ordered_nodes and the json field collected from Open Tree of Life, calculate evolutionary distinctiveness and phylogenetic diversity.
+
 #read_json_get_date_dataframe 
 The json field comes from the Open Tree of Life in which each one or two OTT_IDs have a date estimate. The #read_json_get_date_dataframe field will help us to find corresponding node ID for those date estimates and generate a table named "latest_node_dates”.
 

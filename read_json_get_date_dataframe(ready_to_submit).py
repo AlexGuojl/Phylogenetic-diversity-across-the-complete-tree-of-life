@@ -213,7 +213,7 @@ ls_id_node = []
 for row in agetable1.itertuples():
     ott1 = int(getattr(row,"ott1"))
     ott2 = int(getattr(row,"ott2"))
-    ls_id_node.append(find_commonancestor(ott1,ott2))##这里
+    ls_id_node.append(find_commonancestor(ott1,ott2))##
     
 agetable1["id"] = ls_id_node##a table of age of 2 ott with date estimates
 
@@ -261,7 +261,6 @@ agetable3 = pd.DataFrame(agetable3,columns = ["ott","id","age"])
 agetable3["ott"] = agetable3["ott"].astype(float)
 
 
-#删掉agetable3中和agetable2重合的agels_missed_real_parent
 
 #agetable2
 lsid_2 = agetable2["id"]

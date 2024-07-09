@@ -71,7 +71,7 @@ def ed_node_realp(node_id): #all the id are nodes, so no need to use leaf_realpa
         ls_part = []
         ls_ed = []
         ind = 1
-        #####再添加一个计数器——times
+        #####
         times = 0
         while ind < len(list_try):
             if float(find_age_for_pd_estimate(list_try[ind])) == 0:
@@ -171,7 +171,7 @@ def find_closest_parents_with_date_PD(a):##find closest node parents that have a
 
 
 
-#一个parent的列表
+#a list of parent
 def find_parents_with_date_PD(node_id):##find closest node parents that have a date
     #based on a node id(a)
     list_try = []#list of parents

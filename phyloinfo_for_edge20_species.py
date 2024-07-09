@@ -158,9 +158,9 @@ def ed_node_realp(node_id):
         return(float(format(sum(ls_ed),'.6f')))
 
     if find_age_for_pd_estimate(node_id) == 0:
-        df_des_node = df_nodes[df_nodes["parent"] == node_id]#这是第一代descendants——以nodeid为parent的nodes，这一步的目的是向下找出一个接近的node date，以便估计branch length
+        df_des_node = df_nodes[df_nodes["parent"] == node_id]#This is the first generation of descendants - nodes with nodeid as parent. The purpose of this step is to find a close node date in order to estimate the branch length.
         ls_des_age = df_des_node["id"].apply(find_age_for_pd_estimate)
-        ls_des_age = sorted(ls_des_age,reverse = True)#第[0]位应该是最大的node age
+        ls_des_age = sorted(ls_des_age,reverse = True)#[0]should be the biggest node age
         count = 0
         if ls_des_age == []:
             ls_des_age.append(0)
@@ -314,7 +314,7 @@ for row in nodes_for_age_function[nodes_for_age_function["age"]>0][1:].itertuple
 ##combine the two species that have the same most recent common ancestor
 #leaves table for calculating ed(leaves2 is a table of leaves in which species that have the same real_parent are combined)
 
-    ##ccalculate ed for the entire table###############################
+    ##calculate ed for the entire table###############################
 
 
     #get the end time

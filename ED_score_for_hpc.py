@@ -29,7 +29,6 @@ leaves1 = pd.DataFrame(df_leaves,columns = ["id","parent","ott","real_parent"])
 leaves2 = leaves1
 leaves2['id'] = leaves2['id'].astype(str)
 leaves2 = leaves2.groupby("parent")["id"].apply(lambda x:x.str.cat(sep = ",")).reset_index()
-leaves2 = leaves2[0:50]
 
 new_id_ls = []
 
@@ -197,7 +196,6 @@ for row in ages_bootstrap_final[ages_bootstrap_final["age"]>0][1:].itertuples():
 ed_total = leaves2["new_id"].apply(ed_new)
 ls_ed_total = ed_total.tolist()
 
-print(arg)
 print(ls_ed_total)
 
 

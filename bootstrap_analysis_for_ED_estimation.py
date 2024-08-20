@@ -115,7 +115,7 @@ list_of_ed_list = []
 ##main program(return a 1656825 ed scores list)
 
 times = 1
-while times < 101:
+while times < 2:
     start_time = time.time()
     random.seed(times)
     currentDateAndTime = datetime.now()

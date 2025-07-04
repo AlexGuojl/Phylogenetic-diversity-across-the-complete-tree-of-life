@@ -84,7 +84,7 @@ for row in leaves1.itertuples():
 
 df_leaves["real_parent"] = ls_realp_leaves#df leaves is updated here
 
-df_leaves.to_csv("updated_ordered_leaves.csv")#an extra column "Unnamed: 0" is included
+#df_leaves.to_csv("updated_ordered_leaves_2.0.csv")#an extra column "Unnamed: 0" is included
 
 
 ls_realp_nodes = []
@@ -117,7 +117,7 @@ for row in nodes1.itertuples():
 
 
 df_nodes["real_parent"] = ls_realp_nodes#df nodes is updated here
-df_nodes.to_csv("updated_ordered_nodes.csv",encoding = 'gbk')
+#df_nodes.to_csv("updated_ordered_nodes_2.0.csv",encoding = 'gbk')
 
 
 
@@ -262,6 +262,7 @@ agetable3["ott"] = agetable3["ott"].astype(float)
 
 
 
+
 #agetable2
 lsid_2 = agetable2["id"]
 lsid_3 = agetable3["id"]
@@ -292,4 +293,4 @@ agetable = agetable.loc[agetable["id"] > 0]
 ##deal with overlapped node id:
 agetable = agetable.groupby("id")["ages"].apply(lambda x:x.str.cat(sep = ",")).reset_index()
 
-agetable.to_csv("latest_node_dates(real_parent)_2.0.csv",encoding = "gbk")
+#agetable.to_csv("latest_node_dates(real_parent)_2.0.csv",encoding = "gbk")

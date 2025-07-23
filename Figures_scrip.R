@@ -9,6 +9,7 @@ library(ggnewscale)
 library(tidyverse)
 
 setwd("/Users/alexgjl/Desktop/master/项目2/文件/")
+
 leaves_table <-  read.csv("updated_ordered_leaves_2.0.csv",stringsAsFactors=F, header=T)
 
 nodes_table <- read.csv("updated_ordered_nodes_2.0.csv",
@@ -176,9 +177,9 @@ Fig1 <- annotate_figure(Fig1,
                                          rot = 90, vjust = 1, size = 12))
 
 Fig1
-write.csv(x = dfED_dis_new1, file = "Figure_1_Eukaryota.csv")
-write.csv(x = dfED_dis_new2, file = "Figure_1_Metazoa.csv")
-write.csv(x = dfED_dis_new3, file = "Figure_1_Vertebrata.csv")
+write.csv(x = dfED_dis_new1, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/Figure_1_Eukaryota.csv")
+write.csv(x = dfED_dis_new2, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/Figure_1_Metazoa.csv")
+write.csv(x = dfED_dis_new3, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/Figure_1_Vertebrata.csv")
 
 
 
@@ -334,7 +335,8 @@ box_all <- ggplot(pd_table24_l_Grouped, aes(fill = name,y = name, x = log(PD,10)
                                Aves= "#ea9c9d"))+ theme(legend.title = element_text(size = 30))+
   labs(x="Log10 (PD) Myr",y="")+ theme(text = element_text(size = 17))
 
-box_all
+write.csv(x = pd_table24_l_Grouped, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/Figure_3_PDvalues.csv")
+
 
 
 
@@ -355,11 +357,12 @@ cor_result <- cor.test(median_pd$logrich, median_pd$logpd, method = "spearman")
 round(cor_result$estimate, 3)
 signif(cor_result$p.value, 3)
 
+write.csv(x = median_pd, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/FigureS5_PDvalues.csv")
 
 
 
 
-#Figure 6: EDGE estimation
+#Figure 4: EDGE estimation
 setwd("/Users/alexgjl/Desktop/master/项目2/文件/")
 df_iucn <- read.csv("iucn.csv",
                     stringsAsFactors=F, header=T)
@@ -464,8 +467,7 @@ ed_top20_l$name <- factor(ed_top20_l$name,levels = c("Platysternon megacephalum"
 
 ed_top20_l$Group <- factor(ed_top20_l$Group,levels = c("Plantae","Invertebrata","Vertebrata"))
 
-write.csv(x = ed_top20_l,file = "Figure_6.csv")
-#box_ploted_top20$name <- factor(ed_top20$name,levels = c(ed_top20$name))
+
 Fig6 <- ggplot(ed_top20_l, aes(y = name, x = ED,fill = Group)) + 
   geom_boxplot(alpha = 0.6)+theme_classic()+xlim(0,500)+ theme(text = element_text(size = 15))+labs(x="ED (Myr)",y="")+
   scale_fill_manual(values = c(Plantae= "grey",Vertebrata = "#ea9c9d",
@@ -473,20 +475,14 @@ Fig6 <- ggplot(ed_top20_l, aes(y = name, x = ED,fill = Group)) +
 Fig6 
 
 
+write.csv(x = ed_top20_l, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/Figure_4_EDGEvalues.csv")
 
 
 
 
 
 
-
-
-
-
-
-
-
-#Supplementary Figure 1
+#Supplementary Figure 2
 qq1<- ggplot(ED_all, aes(sample = logED)) +
   stat_qq() +
   stat_qq_line()
@@ -559,16 +555,17 @@ qq23<- ggplot(ED_mam, aes(sample = logED)) +
 qq24<- ggplot(ED_ave, aes(sample = logED)) +
   stat_qq() +
   stat_qq_line()
-FigS1<- ggarrange(qq1,qq2,qq3,qq4,qq5,qq6,qq7,qq8,qq9,qq10,qq11,qq12,
+FigS2<- ggarrange(qq1,qq2,qq3,qq4,qq5,qq6,qq7,qq8,qq9,qq10,qq11,qq12,
                   qq13,qq14,qq15,qq16,qq17,qq18,qq19,qq20,qq21,qq22,qq23,qq24,
                   ncol = 4, nrow = 6)
 
 
-FigS1
+FigS2
+write.csv(x = ED_all, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/FigureS2_EDvalues.csv")
 
 
 
-##Supplementary Figure 2
+##Supplementary Figure 3
 #s1a tsar
 ED_tsa <- filter(ED_all,63777< ED_all$id & ED_all$id<112742)
 ED_tsa$Group<- rep("TSAR",times = 48964)
@@ -587,7 +584,7 @@ df_dis_tsar$Group <- factor(df_dis_tsar$Group,levels = c("Alveolata","Rhizaria",
 
 mycolors<-brewer.pal(9, "YlOrRd")
 
-FigS2_a <- ggplot(df_dis_tsar, aes(x = logED,fill = Group)) + geom_density(alpha = 0.5) +
+FigS3_a <- ggplot(df_dis_tsar, aes(x = logED,fill = Group)) + geom_density(alpha = 0.5) +
   facet_grid(Group ~ .)+theme(panel.grid.major=element_blank(),
                               panel.grid.minor=element_blank())+theme_classic()+
   scale_fill_manual(values = c(Rhizaria = "#FFEDA0",Alveolata = "#FFFFCC",
@@ -614,7 +611,7 @@ df_dis_dia$Group <- factor(df_dis_dia$Group, levels = c("Haptista","TSAR","Crypt
                                                         "Diaphoretickes"))
 
 
-FigS2_b <- ggplot(df_dis_dia, aes(x = logED,fill = Group)) + geom_density(alpha = 0.5) +
+FigS3_b <- ggplot(df_dis_dia, aes(x = logED,fill = Group)) + geom_density(alpha = 0.5) +
   facet_grid(Group ~ .)+theme(panel.grid.major=element_blank(),
                               panel.grid.minor=element_blank())+theme_classic()+
   scale_fill_manual(values = c(Haptista = "#FFFFCC",TSAR = "#FFEDA0",
@@ -647,18 +644,31 @@ within_hymenoptera2 <- within_hymenoptera1
 
 within_hymenoptera2$Group <- factor(within_hymenoptera1$Group,levels = c("Hymenoptera","Sawflies and Wasps","Bee","Ant"))
 
-FigS2_c <- ggplot(within_hymenoptera1, aes(x = logED,fill = Group)) + geom_density(alpha = 0.7) +
+FigS3_c <- ggplot(within_hymenoptera1, aes(x = logED,fill = Group)) + geom_density(alpha = 0.7) +
   facet_grid(Group ~ .)+theme(panel.grid.major=element_blank(),
                               panel.grid.minor=element_blank())+theme_classic()+
   scale_fill_brewer(palette="Blues")+
   labs(x="Log10 (ED) Myr",y="")
 
-FigS2 <- ggarrange(FigS2_a,FigS2_b,FigS2_c,labels = c("     TSAR","Diaphoretickes","Hymenoptera"),ncol = 3, nrow = 1)
-FigS2
+FigS3 <- ggarrange(FigS3_a,FigS3_b,FigS3_c,labels = c("     TSAR","Diaphoretickes","Hymenoptera"),ncol = 3, nrow = 1)
+FigS3
+
+write.csv(x = df_dis_tsar, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/FigureS3_ED_TSAR.csv")
+write.csv(x = df_dis_dia, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/FigureS3_ED_Dia.csv")
+write.csv(x = within_hymenoptera1, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/FigureS3_ED_Hym.csv")
 
 
 
-#Supplementary Figure 3
+
+
+
+
+
+
+
+
+
+#Supplementary Figure 6
 setwd("/Users/alexgjl/Desktop/final_data/")
 resolved_medianED <-  read.csv("ed_median.csv",
                                stringsAsFactors=F, header=T)
@@ -785,6 +795,7 @@ scatter_comparison(ED_squa1,"Squamata")
 scatter_comparison(ED_mam1,"Mammalia")
 scatter_comparison(ED_aves1,"Aves")
 
+#figure S6
 grid.arrange( scatter_comparison(ED_gymn1,"Gymnosperm"),scatter_comparison(ED_coral1,"Cnidaria"),
               scatter_comparison(ED_chon1,"Chondrichthyes"),scatter_comparison(ED_amp1,"Amphibian"),
               scatter_comparison(ED_croc1,"Crocodylia"),scatter_comparison(ED_test1,"Testudines"),
@@ -792,6 +803,22 @@ grid.arrange( scatter_comparison(ED_gymn1,"Gymnosperm"),scatter_comparison(ED_co
               scatter_comparison(ED_aves1,"Aves"),
               ncol = 3)
 
+
+ED_gymn1$Group<- rep("Gymnosperm",times = )
+ED_coral1$Group<- rep("Cnidaria",times = )
+ED_chon1$Group<- rep("Chondrichthyes",times = )
+ED_amp1$Group<- rep("Amphibian",times = )
+ED_croc1$Group<- rep("Crocodylia",times = )
+ED_test1$Group<- rep("Testudines",times = )
+ED_squa1$Group<- rep("Squamata",times = )
+ED_mam1$Group<- rep("Mammalia",times = )
+ED_aves1$Group<- rep("Aves",times = )
+
+
+
+df_s6 <- rbind(ED_gymn1,ED_coral1,ED_chon1,ED_amp1,
+               ED_croc1,ED_test1,ED_squa1,ED_mam1,ED_aves1)
+write.csv(x = df_s6, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/FigureS6_ED_comparison.csv")
 
 
 #compare edge
@@ -847,17 +874,6 @@ EDGE_aves<- calculate_new_EDGE(EDGE_aves)
 
 #recalculate EDGE to use the same IUCN_category as previous estimation.
 #make figure
-
-scatter_comparison_EDGE <- function(df,input_clade) {
-  scatter_EDGE <- ggplot(data=df, aes(x=as.numeric(EDGE), y=as.numeric(new_EDGE))) + geom_point(alpha = .5) +
-    theme_bw() + theme(panel.grid=element_blank())+theme_classic()+#+xlim(0,)+ylim(0,2.5) +
-    labs(x ="EDGE estimated in previous research" ,y = "EDGE calculated in this study",title = input_clade)+
-    geom_abline(intercept = 0, slope=1,col = "Red",linewidth = 1)+xlim(0,8)+ylim(0,8) +
-    stat_poly_eq(aes(label=paste(..eq.label..,..adj.rr.label..,..p.value.label..,sep = "~~~~")),formula = y~x,parse=T,size=3.5)
-  return(scatter_EDGE)
-}
-
-
 scatter_comparison_EDGE <- function(df, input_clade) {
   scatter_EDGE <- ggplot(data = df, aes(x=as.numeric(EDGE), y = as.numeric(new_EDGE), color = per_error)) +
     geom_point(alpha = 0.6) +
@@ -893,16 +909,28 @@ scatter_comparison_EDGE(EDGE_aves,"Aves")
 install.packages("gridExtra")
 library(gridExtra)
 
+
 grid.arrange(scatter_comparison_EDGE(EDGE_gymn,"Gymnosperm"), scatter_comparison_EDGE(EDGE_coral,"Cnidaria"),
              scatter_comparison_EDGE(EDGE_chon,"Chondrichthyes"), scatter_comparison_EDGE(EDGE_chon,"Chondrichthyes"),
              scatter_comparison_EDGE(EDGE_croc,"Crocodylia"), scatter_comparison_EDGE(EDGE_test,"Testudines"),
              scatter_comparison_EDGE(EDGE_squa,"Squamata"), scatter_comparison_EDGE(EDGE_mam,"Mammalia"),
              scatter_comparison_EDGE(EDGE_aves,"Aves"), ncol = 3)
 
+EDGE_gymn$Group <- rep("Gymnosperm")
+EDGE_coral$Group <- rep("Cnidaria")
+EDGE_chon$Group <- rep("Chondrichthyes")
+EDGE_amp$Group <- rep("Amphibian")
+EDGE_croc$Group <- rep("Crocodylia")
+EDGE_test$Group <- rep("Testudines")
+EDGE_squa$Group <- rep("Squamata")
+EDGE_mam$Group <- rep("Mammalia")
+EDGE_aves$Group <- rep("Aves")
 
+dfs7<- rbind(EDGE_gymn,EDGE_coral,
+             EDGE_chon,EDGE_amp,EDGE_croc,EDGE_test,EDGE_squa,
+             EDGE_mam,EDGE_aves)
 
-
-
+write.csv(x = dfs7, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/FigureS7_EDGE_comparison.csv")
 
 
 
@@ -1103,11 +1131,14 @@ Fig2
 
 
 
+write.csv(x = rbind(dfED_dis2_final,dfED_dis3_final,dfED_dis4_final), file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/Figure2_ED_lables.csv")
+write.csv(x = dfED_dis2, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/Figure2_ED_Eukaryota.csv")
+write.csv(x = dfED_dis3, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/Figure2_ED_Metazoa.csv")
+write.csv(x = dfED_dis4, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/Figure2_ED_Vertebrata.csv")
+
+
+
 #file of ed scores
-dfED_dis<- rbind(dfED_dis2,dfED_dis3,dfED_dis4)
-write.csv(x = dfED_dis2,file = "Figure_2_Eukaryota.csv")
-write.csv(x = dfED_dis3,file = "Figure_2_Metazoa.csv")
-write.csv(x = dfED_dis4,file = "Figure_2_Vertebrata.csv")
 
 
 
@@ -1116,7 +1147,8 @@ write.csv(x = dfED_dis4,file = "Figure_2_Vertebrata.csv")
 
 
 
-##Supplemenrary Figure 5
+
+##Supplemenrary Figure 4
 setwd("/Users/alexgjl/Desktop/final_data")
 ave_ed_table24 <-  read.csv("average_ed_table_1000_reps.csv",
                             stringsAsFactors=F, header=T)
@@ -1135,7 +1167,7 @@ ave_ed_table24_l$name<- factor(ave_ed_table24_l$name,levels =  c("Aves","Mammali
                                                                  "Hymenoptera","Chelicerata","Mollusca","Metazoa","Holomycota","Chloroplastida",
                                                                  "Spermatophyta","Diaphoretickes",
                                                                  "TSAR","Eukaryota","Biota"))
-FigS5<- ggplot(ave_ed_table24_l , aes(fill = name,y = name, x = log(ED,10))) + 
+FigS4<- ggplot(ave_ed_table24_l , aes(fill = name,y = name, x = log(ED,10))) + 
   geom_boxplot(alpha = 0.6, width = 0.7)+theme_classic()+
   scale_fill_manual(values=c(Biota = "grey", Eukaryota = "grey",TSAR = "grey",
                              Diaphoretickes= "grey",Spermatophyta="grey",
@@ -1149,13 +1181,14 @@ FigS5<- ggplot(ave_ed_table24_l , aes(fill = name,y = name, x = log(ED,10))) +
                              Squamata= "#ea9c9d",Mammalia = "#ea9c9d",
                              Aves= "#ea9c9d"))+ theme(legend.title = element_text(size = 30))+
   labs(x="Log10 (Average ED) Myr",y="")+ theme(text = element_text(size = 17))
-FigS5
+FigS4
 
+write.csv(x = ave_ed_table24_l, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/FigureS4_averageED.csv")
 
 
 #——————————————————————————————————————————————————————above updated—————————————————————————————————————————————————————
 
-#Supplementary Figure 6 and 7
+#Supplementary Figure 8 
 #need to be update since top20 edge species has been updated!!
 
 df_phylo <-  read.csv("/Users/alexgjl/Desktop/final_data/phyloinfo_for_edge20_with_ed.csv",
@@ -1181,7 +1214,8 @@ df_phylo$Group  <- factor(df_phylo$Group,levels = c("Dated Node","Bifurcating No
 
 df_phylo_top10 <- filter(df_phylo,0<df_phylo$rank2 & df_phylo$rank2<11)
 df_phylo_top10$log_age<- log(df_phylo_top10$age+1,10)
-Fig_S6 <- ggplot(data=df_phylo_top10,aes(x=(0-log_age),y=log(node_ED,10),color = rank,alpha = 0.9))+
+
+Fig_S8 <- ggplot(data=df_phylo_top10,aes(x=(0-log_age),y=log(node_ED,10),color = rank,alpha = 0.9))+
   geom_point(aes(shape = Group, color=rank,size = Group))+theme_classic()+
   scale_shape_manual(values = c("Bifurcating Node without Date"=1,"Dated Node" = 19,"Resolved Node" = 13,"Leaf" = 1))+
   scale_size_manual(values= c("Resolved Node"=2, "Bifurcating Node without Date"=4,"Dated Node"=6,"Leaf" = 6))+
@@ -1190,18 +1224,11 @@ Fig_S6 <- ggplot(data=df_phylo_top10,aes(x=(0-log_age),y=log(node_ED,10),color =
                               No.5= "#c74546",No.6= "#4d97cd",No.7="#c74546",No.8= "#c74546",
                               No.9="#4d97cd",No.10= "grey"))+xlab("Log10 (Node Date Estimate) Myr")+
   ylab("Log10 (ED) Myr") +facet_wrap(~ rank, scales = "free")+theme_classic()
-Fig_S6
+Fig_S8
+write.csv(x = df_phylo_top10, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/FigureS8_phyloinfo.csv")
 
 
-
-
-
-
-
-
-
-
-#sample nodes based on species richness for ed distribution
+#Figure S9
 
 setwd("/Users/alexgjl/Desktop/master/项目2/文件")
 
@@ -1360,7 +1387,7 @@ p
 #comparison.  Existing figure 2 could be moved to supplementary
 
 
-setwd("/Users/alexgjl/Desktop/master/项目2/文件/")
+setwd("/Users/alexgjl/Desktop/final_data/")
 selected_clades <-  read.csv("sampled_clades.csv",
                              stringsAsFactors=F, header=T)
 
@@ -1495,6 +1522,12 @@ make_ed_distributions <- function(df, ED_all) {
 }
 ED_dis_figures <-make_ed_distributions(selected_clades,ED_all)
 ED_dis_figures
+
+
+
+write.csv(x = selected_clades, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/FigureS9_selected_clades.csv")
+
+
 
 library(gridExtra)
 do.call(grid.arrange, c(ED_dis_figures, ncol = 5))

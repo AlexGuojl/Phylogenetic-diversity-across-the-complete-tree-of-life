@@ -907,7 +907,8 @@ grid.arrange(scatter_comparison_EDGE(EDGE_gymn,"Gymnosperm"), scatter_comparison
 
 
 
-#Supplementary Figure 4
+
+#Figure 2
 #A stacked bar with different colors
 
 #rebuild these tables
@@ -917,7 +918,6 @@ dfED_dis_new1$ed <- 10**dfED_dis_new1$logED
 dfED_dis_new1<- filter(dfED_dis_new1,dfED_dis_new1$Group != "Biota")
 dfED_dis_new2$ed <- 10**dfED_dis_new2$logED
 dfED_dis_new3$ed <- 10**dfED_dis_new3$logED
-
 
 
 #get popularity from leaves table
@@ -952,163 +952,84 @@ dfED_dis2 <- compare_ED(dfED_dis_new1)
 dfED_dis3 <- compare_ED(dfED_dis_new2)
 dfED_dis4 <- compare_ED(dfED_dis_new3)
 
-analyze_ed_sampling <- function(num_species, num_top_99, num_reps = 1000) {
-  num_reps <- 1000
-  q99_threshold <- quantile(resolved_medianED$median, probs = 0.99)
-  binomial_distribution <- numeric(num_reps)
-  
-  for (i in seq_len(num_reps)) {
-    sample_vals <- sample(resolved_medianED$median, num_species, replace = FALSE)
-    binomial_distribution[i] <- sum(sample_vals >= q99_threshold)
-  }
-  
-  proportion_low <- mean(binomial_distribution >= num_top_99)
-  proportion_high <- mean(binomial_distribution < num_top_99)
-  
-  return(list(
-    proportion_low = proportion_low,
-    proportion_high = proportion_high
-  ))
-}
 
-
-process_ed_sampling <- function(df) {
+analyze_quantile_enrichment <- function(df, resolved_median_ed) {
   library(dplyr)
+  library(purrr)
   summary_df <- df %>%
     group_by(Group) %>%
     summarise(
       num_top_99 = sum(Quantile == "Q(0.99)"),
       num_species = n(),
       .groups = "drop"
-    ) %>%
+    )
+  
+
+  result_df <- summary_df %>%
     rowwise() %>%
     mutate(
-      results = list(analyze_ed_sampling(num_species, num_top_99)),
-      proportion_low = results$proportion_low,
-      proportion_high = results$proportion_high
+      
+      random_counts = list(replicate(1000, {
+        sampled <- sample(resolved_median_ed$median, size = num_species, replace = FALSE)
+        sum(sampled >= quantile(resolved_medianED$median, probs = 0.99))
+      })),
+      # prop_high 和 prop_low
+      prop_high = mean(unlist(random_counts) >= num_top_99),
+      prop_low = mean(unlist(random_counts) < num_top_99)
     ) %>%
-    select(-results)
-
-  df_with_results <- df %>%
-    left_join(summary_df, by = "Group")
+    select(Group, num_top_99, num_species, prop_high, prop_low) %>%
+    ungroup()
   
-  return(df_with_results)
+  return(result_df)
 }
 
-dfED_dis2_1 <- process_ed_sampling(dfED_dis2)
-dfED_dis3_1<-process_ed_sampling(dfED_dis3)
-dfED_dis4_1<-process_ed_sampling(dfED_dis4)
-
-
-#proportion_low代表应该有更多的q99
-
-dfED_dis2<- select(dfED_dis2,id,Group,Quantile,ed)
-dfED_dis3<- select(dfED_dis3,id,Group,Quantile,ed)
-dfED_dis4<- select(dfED_dis4,id,Group,Quantile,ed)
-
-dfED_dis2_1<- select(dfED_dis2_1,id,Group,Quantile,ed,proportion_low,proportion_high)
-dfED_dis3_1<- select(dfED_dis3_1,id,Group,Quantile,ed,proportion_low,proportion_high)
-dfED_dis4_1<- select(dfED_dis4_1,id,Group,Quantile,ed,proportion_low,proportion_high)
-
-
-dfED_dis2$num <- rep(1,times = )
-dfED_dis3$num <- rep(1,times = )
-dfED_dis4$num <- rep(1,times = )
-
-dfED_dis2_1$num <- rep(1,times = )
-dfED_dis3_1$num <- rep(1,times = )
-dfED_dis4_1$num <- rep(1,times = )
 
 
 
-
-library(plyr)
-library(tidyverse)
-library(readxl)
-library(colorspace) 
-
-dfED_dis2$Quantile <- factor(dfED_dis2$Quantile)
-dfED_dis3$Quantile <- factor(dfED_dis3$Quantile)
-dfED_dis4$Quantile <- factor(dfED_dis4$Quantile)
-
-dfED_dis2_1$Quantile <- factor(dfED_dis2_1$Quantile)
-dfED_dis3_1$Quantile <- factor(dfED_dis3_1$Quantile)
-dfED_dis4_1$Quantile <- factor(dfED_dis4_1$Quantile)
+dfED_dis2_2 <- analyze_quantile_enrichment(dfED_dis2,resolved_medianED)
+dfED_dis3_2 <- analyze_quantile_enrichment(dfED_dis3,resolved_medianED)
+dfED_dis4_2 <- analyze_quantile_enrichment(dfED_dis4,resolved_medianED)
 
 
-#dfED_dis2_1 <- aggregate(x = dfED_dis2$num, by = list(dfED_dis2$Group,
-#                                                     dfED_dis2$Quant),sum)
-#dfED_dis2_1 <- ddply(dfED_dis2_1,"Group.1",transform,percent_quant = x/sum(x)*100)
-
-#dfED_dis2_1$Group.1 <- factor(dfED_dis2_1 $Group.1,levels = c("Eukaryota","TSAR","Diaphoretickes",
-#                                                             "Spermatophyta",
-#                                                             "Chloroplastida","Holomycota","Metazoa"))
-#dfED_dis2_1$Group.2 <- factor(dfED_dis2_1$Group.2 ,levels = c("Q(0.99)","Q(0.95)","Q(0.5)"," "))
-
-#dfED_dis2_1$Quantile <- dfED_dis2_1$Group.2
-#dfED_dis2_1$Clade <- dfED_dis2_1$Group.1
-
-#dfED_dis3_1 <- aggregate(x = dfED_dis3$num, by = list(dfED_dis3$Group,
-#                                                     dfED_dis3$Quant),sum)
-#dfED_dis3_1 <- ddply(dfED_dis3_1,"Group.1",transform,percent_quant = x/sum(x)*100)
-#dfED_dis3_1$Group.1 <- factor(dfED_dis3_1 $Group.1,levels = c("Mollusca","Chelicerata","Hymenoptera",
-                                                              "Coleoptera","Diptera","Lepidoptera","Vertebrata"))
-#dfED_dis3_1$Group.2 <- factor(dfED_dis3_1$Group.2 ,levels = c("Q(0.99)","Q(0.95)","Q(0.5)"," "))
-#dfED_dis3_1$Quantile <- dfED_dis3_1$Group.2
-#dfED_dis3_1$Clade <- dfED_dis3_1$Group.1
+dfED_dis2_final <- merge(dfED_dis2,dfED_dis2_2,how = "Group",on = "left")
+dfED_dis3_final <- merge(dfED_dis3,dfED_dis3_2,how = "Group",on = "left")
+dfED_dis4_final <- merge(dfED_dis4,dfED_dis4_2,how = "Group",on = "left")
 
 
-#dfED_dis4_1 <- aggregate(x = dfED_dis4$num, by = list(dfED_dis4$Group,
-#                                                     dfED_dis4$Quant),sum)
-#dfED_dis4_1 <- ddply(dfED_dis4_1,"Group.1",transform,percent_quant = x/sum(x)*100)
-#dfED_dis4_1$Group.1 <- factor(dfED_dis4_1 $Group.1,levels = c("Cyclostomata","Chondrichthyes","Actinopterygii","Amphibia",
-#                                                              "Crocodylia","Testudines","Squamata","Mammalia",
- #                                                             "Aves"))
-#dfED_dis4_1$Group.2 <- factor(dfED_dis4_1$Group.2 ,levels = c("Q(0.99)","Q(0.95)","Q(0.5)"," "))
-#dfED_dis4_1$Quantile <- dfED_dis4_1$Group.2
-#dfED_dis4_1$Clade <- dfED_dis4_1$Group.1
 
-
-#replace this figure with violin plot
-
-
-dfED_dis2_2 <- select(dfED_dis2_1,Group,proportion_low,proportion_high)
-dfED_dis3_2<- select(dfED_dis3_1,Group,proportion_low,proportion_high)
-dfED_dis4_2<- select(dfED_dis4_1,Group,proportion_low,proportion_high)
-
-label_df2 <- dfED_dis2_2 %>%
-  select(Group, proportion_low, proportion_high) %>%
+label_df2 <- dfED_dis2_final %>%
+  select(Group, prop_low, prop_high) %>%
   distinct() %>%
   mutate(
     label = case_when(
-      proportion_low > 0.95 ~ "*-" ,
-      proportion_high > 0.95  ~ "*+",
+      prop_low > 0.95 ~ "*+" ,
+      prop_high > 0.95  ~ "*-",
       TRUE ~ ""
     )
   )
-label_df3 <- dfED_dis3_2 %>%
-  select(Group, proportion_low, proportion_high) %>%
+label_df3 <- dfED_dis3_final %>%
+  select(Group, prop_low, prop_high) %>%
   distinct() %>%
   mutate(
     label = case_when(
-      proportion_low > 0.95 ~ "*-" ,
-      proportion_high > 0.95  ~ "*+",
+      prop_low > 0.95 ~ "*+" ,
+      prop_high > 0.95  ~ "*-",
       TRUE ~ ""
     )
   )
-label_df4 <- dfED_dis4_2 %>%
-  select(Group, proportion_low, proportion_high) %>%
+label_df4 <- dfED_dis4_final %>%
+  select(Group, prop_low, prop_high) %>%
   distinct() %>%
   mutate(
     label = case_when(
-      proportion_low > 0.95 ~ "*-" ,
-      proportion_high > 0.95  ~ "*+",
+      prop_low > 0.95 ~ "*+" ,
+      prop_high > 0.95  ~ "*-",
       TRUE ~ ""
     )
   )
 
 
-p2 <- ggplot(dfED_dis2_1, aes(x = Group, y = log(ed,10)))  + 
+p2 <- ggplot(dfED_dis2, aes(x = Group, y = log(ed,10)))  + 
   geom_point(aes(color = Quantile), 
              position = position_jitter(width = 0.2),  
              alpha = 0.6, size = 2) +  
@@ -1124,14 +1045,14 @@ p2 <- ggplot(dfED_dis2_1, aes(x = Group, y = log(ed,10)))  +
   theme(legend.title = element_blank()) +
   geom_text(
     data = label_df2,
-    aes(x = Group, y = 0.5+max(log(dfED_dis2_1$ed, 10)), label = label),
+    aes(x = Group, y = 0.5+max(log(dfED_dis2$ed, 10)), label = label),
     inherit.aes = FALSE,
     size = 7,
     fontface = "bold"
   )
 
 
-p3 <- ggplot(dfED_dis3_1, aes(x = Group, y = log(ed,10)))  + 
+p3 <- ggplot(dfED_dis3, aes(x = Group, y = log(ed,10)))  + 
   geom_point(aes(color = Quantile), 
              position = position_jitter(width = 0.2),  
              alpha = 0.6, size = 2) +  
@@ -1142,18 +1063,18 @@ p3 <- ggplot(dfED_dis3_1, aes(x = Group, y = log(ed,10)))  +
   theme(legend.title = element_blank()) +
   geom_text(
     data = label_df3,
-    aes(x = Group, y = 0.5+max(log(dfED_dis3_1$ed, 10)), label = label),
+    aes(x = Group, y = 0.5+max(log(dfED_dis3$ed, 10)), label = label),
     inherit.aes = FALSE,
     size = 7,
     fontface = "bold"
   )
 
 
-dfED_dis4_1$Group <- factor(dfED_dis4_1$Group,levels = c("Cyclostomata","Chondrichthyes","Actinopterygii","Amphibia",
+dfED_dis4$Group <- factor(dfED_dis4$Group,levels = c("Cyclostomata","Chondrichthyes","Actinopterygii","Amphibia",
                                                               "Crocodylia","Testudines","Squamata","Mammalia",
                                                              "Aves"))
 
-p4 <- ggplot(dfED_dis4_1, aes(x = Group, y = log(ed,10)))  + 
+p4 <- ggplot(dfED_dis4, aes(x = Group, y = log(ed,10)))  + 
   geom_point(aes(color = Quantile), 
              position = position_jitter(width = 0.2),  
              alpha = 0.6, size = 2) +  
@@ -1164,19 +1085,19 @@ p4 <- ggplot(dfED_dis4_1, aes(x = Group, y = log(ed,10)))  +
   theme(legend.title = element_blank()) +
   geom_text(
     data = label_df4,
-    aes(x = Group, y = 0.5+max(log(dfED_dis4_1$ed, 10)), label = label),
+    aes(x = Group, y = 0.5+max(log(dfED_dis4$ed, 10)), label = label),
     inherit.aes = FALSE,
     size = 7,
     fontface = "bold"
   )
-
+p4
 quantile(resolved_medianED$median, probs = 0.5)
 quantile(resolved_medianED$median, probs = 0.95)
 quantile(resolved_medianED$median, probs = 0.99)
 
 library(ggpubr)
-FigS4 <- ggarrange(p2,p3,p4,labels = c("","",""),ncol = 1, nrow = 3)
-FigS4
+Fig2 <- ggarrange(p2,p3,p4,labels = c("","",""),ncol = 1, nrow = 3)
+Fig2
 
 
 
@@ -1184,9 +1105,9 @@ FigS4
 
 #file of ed scores
 dfED_dis<- rbind(dfED_dis2,dfED_dis3,dfED_dis4)
-write.csv(x = dfED_dis2,file = "Figure_S4_Eukaryota.csv")
-write.csv(x = dfED_dis3,file = "Figure_S4_Metazoa.csv")
-write.csv(x = dfED_dis4,file = "Figure_S4_Vertebrata.csv")
+write.csv(x = dfED_dis2,file = "Figure_2_Eukaryota.csv")
+write.csv(x = dfED_dis3,file = "Figure_2_Metazoa.csv")
+write.csv(x = dfED_dis4,file = "Figure_2_Vertebrata.csv")
 
 
 

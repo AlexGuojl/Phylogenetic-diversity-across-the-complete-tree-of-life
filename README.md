@@ -42,4 +42,4 @@ This code will find all ancestors(node) for each species among the top 20 EDGE s
 
 
 # figure_script.R 
-All the figures in this paper (except figure 5 and figure S1) were generated through this code. All input files required for this script is provided with the manuscript.
+All the figures in this paper (except figure 5 and figure S1) were generated through this code. All input files required for this script is provided with the manuscript. All datasets for making figures are available here: https://zenodo.org/records/16879538.

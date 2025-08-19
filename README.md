@@ -1,6 +1,7 @@
 Phylogenetic-Diversity-across-the-complete-tree-of-life
 
 Here I provide codes to run the functions, read in the original tables include ordered_leaves, ordered_nodes and the json field collected from Open Tree of Life, calculate evolutionary distinctiveness and phylogenetic diversity.
+The code based on R version 4.4.2 and Python 3.10.9
 
 # read_json_get_date_dataframe.py
 The input file is the json data which comes from the Open Tree of Life. In this file, each one or two OTT_IDs have a date estimate. The original data looked like this: "mrcaott119219ott212182": [{"source_id": "ot_534@tree5", "age": 40.051873, "source_node": "node665"}, {"source_id": "ot_409@tree1", "age": 54.020365, "source_node": "node18041"}], "mrcaott12995ott26078": [{"source_id": "ot_534@tree5", "age": 56.874824000000004, "source_node": "node606"}, {"source_id": "ot_809@tree2", "age": 69.623766, "source_node": "node23454"}, {"source_id": "ot_534@tree7", "age": 58.020022, "source_node": "node892"}, {"source_id": "ot_531@tree1", "age": 58.414834, "source_node": "node127"}]. The information we need is ott_ID and date estimates: mrcaott119219ott212182, {“age”: [40.051873, 54.020365,]}; mrcaott12995ott26078, {“age”: [56.874824000000004, 69.623766, 58.020022, 58.414834]}.

@@ -29,7 +29,7 @@ In order to capture a measure of uncertainty based on data deficiency, we conduc
  After all ED and PD scores are calculated, ed_arrangement.py will arrange the data and give a dataframe of ED values and a dataframe of PD values.
 
 # Test_ED&PD_estimation.py
-This code is a demo that performs a single time of estimation of ED and PD on your computer. It will take about 7~8 hours and the required datasets are updated_ordered_leaves_2.0.csv, updated_ordered_nodes_2.0.csv and latest_node_dates(real_parent)_2.0.csv.
+This code is a demo that performs a single time of estimation of ED and PD on your computer. It will take about 7~8 hours and the required datasets are updated_ordered_leaves_2.0.csv, updated_ordered_nodes_2.0.csv and latest_node_dates(real_parent)_2.0.csv, which are available in https://zenodo.org/records/16810118, and latest_node_dates(real_parent)_2.0.csv, which is available at https://zenodo.org/records/16931365.
 
 
 # ed_median.py, pd_median.py, pd_median_submitter.sh, ed_median_submitter.sh 

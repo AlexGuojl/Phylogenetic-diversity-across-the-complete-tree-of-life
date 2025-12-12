@@ -11,18 +11,18 @@ from datetime import datetime
 from tqdm import tqdm
 tqdm.pandas(desc='apply')
 
-os.chdir("/Users/alexgjl/Desktop/master/项目2/文件")##change this to the path that the files existed in your computer
+os.chdir("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields")##change this to the path that the files existed in your computer
 
-df_leaves = pd.read_csv("updated_ordered_leaves_2.0.csv",low_memory=False)
+df_leaves = pd.read_csv("updated_ordered_leaves_3.0.csv",low_memory=False)
 leaves1 = pd.DataFrame(df_leaves,columns = ["id","parent","ott","real_parent"])
-df_nodes = pd.read_csv("updated_ordered_nodes_2.0.csv",low_memory=False)
+df_nodes = pd.read_csv("updated_ordered_nodes_3.0.csv",low_memory=False)
 nodes1 = pd.DataFrame(df_nodes,columns = ["id","ott","parent","real_parent","node_rgt","leaf_lft","leaf_rgt","age"])
 nodes = pd.DataFrame(nodes1, columns = ["Unnamed: 0","id","parent","leaf_lft","leaf_rgt","unnamed:0","age"])
 nodes = nodes.fillna(0)
 
 
 nodes_no_age = pd.DataFrame(nodes,columns = ["Unnamed: 0","id","parent","leaf_lft","leaf_rgt","unnamed:0"])
-ages = pd.read_csv("latest_node_dates(real_parent_only).csv", low_memory=False)
+ages = pd.read_csv("latest_node_dates(real_parent)_3.0.csv", low_memory=False)
 
 
 
@@ -45,7 +45,7 @@ ages_selected = pd.DataFrame(ages_selected,columns = ['id', 'age'])
     
 ages_bootstrap_final = pd.merge(nodes_no_age, ages_selected, how = "left",on = "id")
 ages_bootstrap_final = ages_bootstrap_final.fillna(0)
-ages_bootstrap_final.iat[0,6] = 4025.0#give age to the root/node1, always here
+ages_bootstrap_final.iat[0,6] = 4246.666667#give age to the root/node1, always here
 ages_bootstrap_final["age"] = pd.to_numeric(ages_bootstrap_final["age"])
 getname = pd.DataFrame(df_nodes, columns = ["id","name","real_parent"])
 
@@ -123,11 +123,10 @@ def find_proportion_dated_nodes(node_id):#return a proportion
         ls_realparents = list(set(ls_realp) & set(list_try))
         ls_values = []
         ls_values.append(len(ls_parents_with_age))
-        ls_values.append(len(ls_realparents))
+        ls_values.append(len(ls_realparents))#'dated_nodes'/'real_descendants'
         ls_values.append(len(list_try))   
     return(ls_values)
 
-#df_realp["proportions"] = df_realp["id"].apply(find_proportion_dated_nodes)
-#df_realp[['dated_nodes', 'real_descendants', 'all_descendants']] = pd.DataFrame(df_realp['proportions'].to_list(), index=df_realp.index)
-
-#df_realp.to_csv("df_nodes_with_proportion_of_dated&realparent.csv",encoding = "gbk")
+df_realp["proportions"] = df_realp["id"].apply(find_proportion_dated_nodes)
+df_realp[['dated_nodes', 'real_descendants', 'all_descendants']] = pd.DataFrame(df_realp['proportions'].to_list(), index=df_realp.index)
+df_realp.to_csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/df_nodes_with_proportion_of_dated&realparent.csv",encoding = "gbk")

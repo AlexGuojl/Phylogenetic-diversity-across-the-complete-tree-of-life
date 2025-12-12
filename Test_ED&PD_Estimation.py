@@ -20,7 +20,7 @@ os.chdir("/Users/alexgjl/Desktop/PD_across_the_tree_of_life_files")#change this 
 
 arg = 1
 
-df_leaves = pd.read_csv("updated_ordered_leaves_2.0.csv",low_memory=False)
+df_leaves = pd.read_csv("updated_ordered_leaves_3.0.csv",low_memory=False)
 leaves1 = pd.DataFrame(df_leaves,columns = ["id","parent","ott","real_parent"])
 
 
@@ -49,7 +49,7 @@ leaves2["new_id"] = new_id_ls
 #read in nodes table.
 
     #nodes for finding parents
-df_nodes = pd.read_csv("updated_ordered_nodes_2.0.csv",low_memory=False)
+df_nodes = pd.read_csv("updated_ordered_nodes_3.0.csv",low_memory=False)
 nodes1 = pd.DataFrame(df_nodes,columns = ["id","ott","parent","real_parent","node_rgt","leaf_lft","leaf_rgt","age"])
 
     #nodes for calculating ED
@@ -124,7 +124,7 @@ def ed_new3(leaf_id):
 nodes_no_age = pd.DataFrame(nodes,columns = ["Unnamed: 0","id","parent","leaf_lft","leaf_rgt","unnamed:0"])
 
 ##always been updated with the latest json data
-ages = pd.read_csv("latest_node_dates(real_parent)_2.0.csv", low_memory=False)
+ages = pd.read_csv("latest_node_dates(real_parent)_3.0.csv", low_memory=False)
 
 #list_of_ed_list = []
 ##main program(return a 1656825 ed scores list)
@@ -162,7 +162,7 @@ ages_selected = pd.DataFrame(ages_selected,columns = ['id', 'age'])
     
 ages_bootstrap_final = pd.merge(nodes_no_age, ages_selected, how = "left",on = "id")
 ages_bootstrap_final = ages_bootstrap_final.fillna(0)
-ages_bootstrap_final.iat[0,6] = 4025.0#give age to the root/node1, always here
+ages_bootstrap_final.iat[0,6] = 4246.666667.0#give age to the root/node1, always here
 ages_bootstrap_final["age"] = pd.to_numeric(ages_bootstrap_final["age"])
 ##see whether there is descendants that has a larger age than parents
 
@@ -215,7 +215,7 @@ def find_missing_PD(node_id):#
     node_id = nodes_for_age_function.iat[int(node_id)-1,1]#exclude the unique short branch
 
     if find_age_for_pd_estimate(node_id) > 0:
-        return(float(4025-find_age_for_pd_estimate(node_id)))
+        return(float(4246.666667-find_age_for_pd_estimate(node_id)))
     else:
         df_des_node = df_nodes[df_nodes["parent"] == node_id]#This is the first generation of nodes with node_id as parent
                                                              #The purpose of this step is to find a close node date in order to estimate the branch length.
@@ -266,7 +266,7 @@ def find_missing_PD(node_id):#
             continue
     #print(count_up)
     #print(count_down)
-    return(4025-node_date)
+    return(4246.666667-node_date)
 #this function gives the ed estimate of the *******parent of this node_id******
     #the terminal branch will be weighted too in order to estimate PD easier
 
@@ -327,7 +327,7 @@ def ed_node_realp(node_id): #all the id are nodes, so no need to use leaf_realpa
                 if times == 0:
                     ls_part.append(list_try[ind])
                     ls_des.append(find_des(list_try[ind-1]))
-                    ed_temp = ((find_age_for_pd_estimate(list_try[ind])-(4025-find_missing_PD(node_id)))/len(ls_part))*sum(ls_des)
+                    ed_temp = ((find_age_for_pd_estimate(list_try[ind])-(4246.666667-find_missing_PD(node_id)))/len(ls_part))*sum(ls_des)
                     ls_ed.append(ed_temp)
                     ind += 1
                     times +=1

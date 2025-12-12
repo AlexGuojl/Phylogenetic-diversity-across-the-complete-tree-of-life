@@ -1442,10 +1442,9 @@ df_phylo <-  read.csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fie
                       stringsAsFactors=F, header=T)
 getname <- select(leaves_table,id,name)
 df_phylo <- merge(df_phylo,getname, how = "left",on = id)
+
 df_phylo$id <- as.factor(df_phylo$id)
-
-getmane<- select(leaves_table,id,name)
-
+ed_top20 <- ed_top20[order(-ed_top20$EDGE), ]
 ed_top20$rank =  c('No.1','No.2','No.3',"No.4","No.5","No.6","No.7","No.8","No.9",'No.10',
                   'No.11','No.12','No.13','No.14','No.15','No.16','No.17','No.18','No.19','No.20')
 ed_top20$rank2 = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20)
@@ -1471,9 +1470,9 @@ Fig_S8 <- ggplot(data=df_phylo_top10,aes(x=(0-log_age),y=log(node_ED,10),color =
   scale_shape_manual(values = c("Bifurcating Node without Date"=1,"Dated Node" = 19,"Resolved Node" = 13,"Leaf" = 1))+
   scale_size_manual(values= c("Resolved Node"=2, "Bifurcating Node without Date"=4,"Dated Node"=6,"Leaf" = 6))+
   geom_line(aes(color=rank))+
-  scale_color_manual(values=c(No.1= "#c74546",No.2= "grey",No.3= "#c74546",No.4= "grey",
-                              No.5= "#c74546",No.6= "#4d97cd",No.7="#c74546",No.8= "#c74546",
-                              No.9="#4d97cd",No.10= "grey"))+xlab("Log10 (Node Date Estimate) Myr")+
+  scale_color_manual(values=c(No.1= "#c74546",No.2= "grey",No.3= "grey",No.4= "#c74546",
+                              No.5= "#c74546",No.6= "#c74546",No.7="#4d97cd",No.8= "#4d97cd",
+                              No.9="#4d97cd",No.10= "#c74546"))+xlab("Log10 (Node Date Estimate) Myr")+
   ylab("Log10 (ED) Myr") +facet_wrap(~ rank, scales = "free")+theme_classic()
 Fig_S8
 write.csv(x = df_phylo_top10, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/FigureS8_phyloinfo.csv")

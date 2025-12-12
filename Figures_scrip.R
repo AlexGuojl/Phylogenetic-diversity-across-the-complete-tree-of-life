@@ -665,7 +665,8 @@ Fig4 <- ggplot(ed_top20_l, aes(y = name, x = ED, fill = Group)) +
   )
   
 Fig4
-write.csv(x = ed_top20_l, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/Figure_4_EDGEvalues.csv")
+
+write.csv(x = ed_top20, file = "/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/Top20_EDGE_Species.csv")
 
 
 
@@ -1444,7 +1445,8 @@ df_phylo <- merge(df_phylo,getname, how = "left",on = id)
 df_phylo$id <- as.factor(df_phylo$id)
 
 getmane<- select(leaves_table,id,name)
-ed_top20$rank = c('No.1','No.2','ed_top20$rank = c('No.1','No.2','ed_top20$rank = c('No.1','No.2','No.3',"No.4","No.5","No.6","No.7","No.8","No.9",'No.10',
+
+ed_top20$rank =  c('No.1','No.2','No.3',"No.4","No.5","No.6","No.7","No.8","No.9",'No.10',
                   'No.11','No.12','No.13','No.14','No.15','No.16','No.17','No.18','No.19','No.20')
 ed_top20$rank2 = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20)
 

@@ -1,3 +1,7 @@
+#dataframe for nodes information
+#for top 20 edge species
+
+
 import pandas as pd
 import numpy as np
 import os
@@ -10,11 +14,11 @@ from tqdm import tqdm
 tqdm.pandas(desc='apply')
 
 
-os.chdir("/Users/alexgjl/Desktop/master/项目2/文件")##change this to the path that the files existed in your computer
+#os.chdir("/Users/alexgjl/Desktop/master/项目2/文件")##change this to the path that the files existed in your computer
 
 #read in leaves table and keep necessary columns. 
 
-df_leaves = pd.read_csv("updated_ordered_leaves.csv",low_memory=False)
+df_leaves = pd.read_csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/updated_ordered_leaves_3.0.csv",low_memory=False)
 leaves1 = pd.DataFrame(df_leaves,columns = ["id","parent","ott","real_parent"])
 
 
@@ -22,11 +26,13 @@ leaves1 = pd.DataFrame(df_leaves,columns = ["id","parent","ott","real_parent"])
 ##recent ancestor are combined)
 
 #leaves2可以用edgetop20进行merge（"edge20_final.csv"）
-df_edge20 = pd.read_csv("edge20_final.csv",low_memory=False)
+
+df_edge20 = pd.read_csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/top100_ed_values.csv",low_memory=False)
+
 
 #read in nodes table.
     #nodes for finding parents
-df_nodes = pd.read_csv("updated_ordered_nodes.csv",low_memory=False)
+df_nodes = pd.read_csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/updated_ordered_nodes_3.0.csv",low_memory=False)
 nodes1 = pd.DataFrame(df_nodes,columns = ["id","ott","parent","real_parent","node_rgt","leaf_lft","leaf_rgt","age"])
 
     #nodes for calculating ED
@@ -66,7 +72,8 @@ def find_parents_with_date_PD(node_id):##find closest node parents that have a d
     return([i for i in list_date if i > 0])
 
 
-
+#返回一个dataframe包含4列
+    #函数有问题——会返回负值，why？
 def df_edgephylo(leaf_id):
     list_try = []#list of parents
     list_age = []
@@ -126,7 +133,7 @@ def df_edgephylo(leaf_id):
            
 ##now give an average date to those nodes that does not have an date estimate
 def ed_node_realp(node_id): 
-    if find_age_for_pd_estimate(node_id)== 4025:
+    if find_age_for_pd_estimate(node_id)== 4246.666667:
         return(0)
     if find_age_for_pd_estimate(node_id)>0:
         list_try = []#list of parents
@@ -156,11 +163,11 @@ def ed_node_realp(node_id):
                 ls_des = []
     #print(ls_ed)
         return(float(format(sum(ls_ed),'.6f')))
-
+ #先向下找，再向上找,check
     if find_age_for_pd_estimate(node_id) == 0:
-        df_des_node = df_nodes[df_nodes["parent"] == node_id]#This is the first generation of descendants - nodes with nodeid as parent. The purpose of this step is to find a close node date in order to estimate the branch length.
+        df_des_node = df_nodes[df_nodes["parent"] == node_id]
         ls_des_age = df_des_node["id"].apply(find_age_for_pd_estimate)
-        ls_des_age = sorted(ls_des_age,reverse = True)#[0]should be the biggest node age
+        ls_des_age = sorted(ls_des_age,reverse = True)
         count = 0
         if ls_des_age == []:
             ls_des_age.append(0)
@@ -226,7 +233,7 @@ def ed_node_realp(node_id):
 nodes_no_age = pd.DataFrame(nodes,columns = ["Unnamed: 0","id","parent","leaf_lft","leaf_rgt","unnamed:0"])
 
 ##always been updated with the latest json data
-ages = pd.read_csv("latest_node_dates(real_parent_only).csv", low_memory=False)
+ages = pd.read_csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/latest_node_dates(real_parent)_3.0.csv", low_memory=False)
 
 #merge df_nodes with node ages
 nodes_with_age = pd.merge(df_nodes, ages, how = "left",on = "id")
@@ -269,7 +276,7 @@ df_ages = pd.concat([nodes_part1,nodes_part3],axis=0)
 nodes_no_age = df_nodes[['id','parent']]
 nodes_for_age_function = pd.merge(nodes_no_age,df_ages, how = "left", on = "id")
 nodes_for_age_function = nodes_for_age_function.fillna(0)
-nodes_for_age_function.iat[0,2] = 4025.0
+nodes_for_age_function.iat[0,2] = 4246.666667
 nodes_for_age_function["age"] = pd.to_numeric(nodes_for_age_function["age"])
 
 
@@ -314,7 +321,7 @@ for row in nodes_for_age_function[nodes_for_age_function["age"]>0][1:].itertuple
 ##combine the two species that have the same most recent common ancestor
 #leaves table for calculating ed(leaves2 is a table of leaves in which species that have the same real_parent are combined)
 
-    ##calculate ed for the entire table###############################
+    ##ccalculate ed for the entire table###############################
 
 
     #get the end time
@@ -324,18 +331,19 @@ print(currentDateAndTime.strftime("%H:%M:%S"))
 
 
 
-df_edge20 = pd.DataFrame(df_edge20,columns = ["name","EDGE","ott"])
-edge20 = pd.DataFrame(df_edge20,columns = ["name","EDGE","ott"])
-getid = pd.DataFrame(leaves1,columns = ["id","ott"])
-edge20_final = pd.merge(edge20,getid,how = "left",on = "ott")
 
 
-##a dataframe of ed scores
 
- 
+df_edge20 = df_edge20[0:20]
+getinfo = pd.DataFrame(df_leaves,columns = ["id","name","ott"])
+df_edge20 = pd.merge(df_edge20,getinfo,how = "left",on = "id")
+
+
+df_edge20 = pd.DataFrame(df_edge20,columns = ["id","name","EDGE","ott"])
+
 
 lsdf = []
-lsid = list(edge20_final["id"])
+lsid = list(df_edge20["id"])
 for i in lsid:
     lsdf.append(df_edgephylo(i))
 df_phylo = pd.concat(lsdf)
@@ -358,7 +366,11 @@ for row in df_phylo.itertuples():
             ls_group.append("A")
 df_phylo["Group"] = ls_group
 
-df_median_ed = pd.read_csv("median_ed_final.csv",low_memory=False)
+
+
+
+df_median_ed = pd.read_csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/ed_median.csv",low_memory=False)
+df_median_ed["ed"] = df_median_ed["median"]
 df_median_ed = pd.DataFrame(df_median_ed,columns = ["id","ed"])
 df_phylo = pd.merge(df_phylo,df_median_ed,how = "left",on = "id")
 
@@ -370,7 +382,7 @@ for row in df_phylo.itertuples():
     leaf_ed = getattr(row,"ed")
     parent_id = int(getattr(row,"all_parent"))
     if Group == "D":
-        ls_node_ed.append(leaf_ed)#   
+        ls_node_ed.append(leaf_ed)
     else:
         ls_node_ed.append(ed_node_realp(parent_id))
 
@@ -378,4 +390,13 @@ for row in df_phylo.itertuples():
 
 
 df_phylo["node_ED"] = ls_node_ed
-df_phylo.to_csv("phyloinfo_for_edge20_with_ed.csv",encoding = "gbk")
+df_phylo.to_csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/phyloinfo_for_edge20_with_ed.csv",encoding = "gbk")
+
+
+
+
+
+
+
+
+    

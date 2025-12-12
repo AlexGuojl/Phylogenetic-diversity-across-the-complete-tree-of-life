@@ -8,27 +8,153 @@ library(RColorBrewer)
 library(ggnewscale)
 library(tidyverse)
 
-setwd("/Users/alexgjl/Desktop/master/项目2/文件/")
+#arrange ed table
+resolved_medianED <-  read.csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/ed_median.csv",
+                               stringsAsFactors=F, header=T)
+getname <- select(leaves_table,id,name,ott)
+get_ci <- read.csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/95ci_ed.csv",
+                   stringsAsFactors=F, header=T)
 
-leaves_table <-  read.csv("updated_ordered_leaves_2.0.csv",stringsAsFactors=F, header=T)
+ed_table <- merge(resolved_medianED,get_ci,how = "left",on ="id")
+ed_table<- merge(ed_table,getname,how = "left",on = "id")
+ed_table<- select(ed_table,-X)
+write.csv(x = ed_table, file = "/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/Supplementary_Data_S1.csv")
 
-nodes_table <- read.csv("updated_ordered_nodes_2.0.csv",
+
+median_pd <-  read.csv("pd_median.csv",
+                       stringsAsFactors=F, header=T)
+get_ci_pd <- read.csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/95ci_pd.csv",
+                   stringsAsFactors=F, header=T)
+pd_table <- merge(median_pd,get_ci_pd,how = "left",on = "id")
+pd_table<- select(pd_table,-X)
+write.csv(x = pd_table, file = "/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/Supplementary_Data_S2.csv")
+
+
+
+colnames(leaves_table)
+leaves_to_upload <- select(leaves_table,-X,-iucn,-raw_popularity,-popularity,-popularity_rank,-price)
+colnames(leaves_to_upload)
+write.csv(x = leaves_to_upload, file = "/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/Onezoomdata_Leaves.csv")
+
+colnames(nodes_table)
+nodes_to_upload <- select(nodes_table,-raw_popularity,-popularity,       
+                           -iucnNE,              -iucnDD,              -iucnLC,              -iucnNT,             
+                         -iucnVU,              -iucnEN,              -iucnCR,              -iucnEW,              
+                         -iucnEX,             
+                          -popleaf,             -popleaf_ott)
+colnames(nodes_to_upload)
+write.csv(x = nodes_to_upload, file = "/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/Onezoomdata_Nodes.csv")
+rm(list = ls())
+
+
+
+
+
+
+
+setwd("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/")
+leaves_table <-  read.csv("updated_ordered_leaves_3.0.csv",
+                        stringsAsFactors=F, header=T)
+nodes_table <- read.csv("updated_ordered_nodes_3.0.csv",
                         stringsAsFactors=F, header=T)
 
-nodes_with_pd<- read.csv("nodes_with_pd.csv",
-                         stringsAsFactors=F, header=T)
+#nodes_with_pd： id	name	ott	richness
+nodes_table1 <- nodes_table
+nodes_table1$richness <- nodes_table1$leaf_rgt-nodes_table1$leaf_lft+1
+nodes_with_pd<- select(nodes_table1, id,name,ott,richness)
+
+library(readxl)
+excel_file <- "/Users/alexgjl/Desktop/master/项目2/论文修改_回答reviewer问题/EDGE-Lists-2020_website.xlsx"
+sheets <- excel_sheets(excel_file)
+sheet_data <- list()
+for (sheet in sheets) {
+  data <- read_excel(excel_file, sheet = sheet)
+  data$sheet_name <- sheet  
+  sheet_data[[sheet]] <- data
+}
+
+for (i in seq_along(sheet_data)) {
+  assign(paste0("df", i), sheet_data[[sheets[i]]])
+}
 
 
-setwd("/Users/alexgjl/Desktop/final_data/")
-###Figure 2: The distribution of ED scores across selected groups
-resolved_medianED <-  read.csv("ed_median.csv",
+
+get_ED <- function(df) {
+  if ("species" %in% colnames(df)) {
+    df$pre_median_ED <- log(df$ED,10)
+    df$name <- df$species
+    df1 <- select(df,name,ED,pre_median_ED)
+    return(df1)
+  } 
+  else if ("Species" %in% colnames(df)) {
+    df$species <- df$Species
+    df$pre_median_ED <- log(df$ED,10)
+    df$name <- df$species
+    df1 <- select(df,name,ED,pre_median_ED)
+    return(df1)
+  }
+}
+arrange_precalcukated_ED <- function(df) {
+  df$pre_median_ED <- log(df$ED,10)
+  df$name <- df$Species
+  df1 <- select(df,name,pre_median_ED)
+  return(df1)
+}
+
+
+
+ED_amp <- get_ED(df2)
+ED_aves <- get_ED(df4)
+ED_mam <- get_ED(df6)
+df_test <- filter(df8,df8$Order == "Testudines")
+df_squa <-filter(df8,df8$Order == "Squamata")
+df_croc <- filter(df8,df8$Order == "Crocodylia")
+ED_test <- get_ED(df_test)
+ED_squa<- get_ED(df_squa)
+ED_croc<- get_ED(df_croc)
+ED_coral <- get_ED(df10)
+ED_chon <- get_ED(df12)
+ED_gymn<-get_ED(df14)
+
+pre_ed_all<- rbind(ED_amp,ED_aves,ED_mam,ED_test,
+                   ED_squa,ED_croc,ED_coral,ED_chon,ED_gymn)
+df_names <- select(leaves_table,id,name)
+pre_ed_all_with_id <- merge(pre_ed_all,df_names,how = "left", on = name)
+#write.csv(x = pre_ed_all_with_id, file = "/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/Rikki_estimated_ED_with_ID.csv")
+
+
+
+###Figure 1: The distribution of ED scores across selected groups
+resolved_medianED <-  read.csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/ed_median.csv",
                                stringsAsFactors=F, header=T)
-ED_all <- resolved_medianED
-ED_all$logED <- log(ED_all$median,10)
 
+rikki_ed <-  read.csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/Rikki_estimated_ED_with_ID.csv",
+                               stringsAsFactors=F, header=T)
+our_ed <- resolved_medianED
+getname <- select(leaves_table,id,name)
+our_ed <- merge(our_ed,getname, how = "left",on = id)
+
+
+missing_name <- rikki_ed$name[!(rikki_ed$name %in% our_ed$name)]
+#no missing name at all
+
+
+
+###########################################replace our estimation with rikki's###################################################
+###########################################replace our estimation with rikki's###################################################
+ED_all <- our_ed
+rikki_ed$median <- rikki_ed$ED
+idx <- match(rikki_ed$name, ED_all$name)  
+matched_rikki <- which(!is.na(idx))
+ED_all$median[idx[matched_rikki]] <- rikki_ed$median[matched_rikki]
+ED_all$logED <- log(ED_all$median,10)
 ED_all$Group <- rep("Biota",times = )
+quantile(ED_all$median, probs = c(0.025,0.5, 0.975), na.rm = TRUE)
 
 ED_all <- select(ED_all, id,Group,logED)
+
+
+
 #"Eubacteria","All"
 ED_Euk <- filter(ED_all,ED_all$id>59642)
 ED_Euk$Group = rep("Eukaryota",times = )
@@ -100,6 +226,30 @@ dfED_dis_new1$Group <- factor(dfED_dis_new1$Group,levels = c("Biota","Eukaryota"
 
 install.packages("nortest")  
 library(nortest)
+#check median value
+
+ED_tsa1 <- ED_tsa
+ED_tsa1$ED <- 10**ED_tsa$logED
+median(ED_tsa1$ED)
+ED_mol1 <- ED_mol
+ED_mol1$ED <- 10**ED_mol1$logED
+median(ED_mol1$ED)
+ED_chon1 <- ED_chon
+ED_chon1$ED <- 10**ED_chon1$logED
+median(ED_chon1$ED)
+
+ED_amph1 <- ED_amph
+ED_amph1$ED <- 10**ED_amph1$logED
+median(ED_amph1$ED)
+
+ED_croc1 <- ED_croc
+ED_croc1$ED <- 10**ED_croc1$logED
+median(ED_croc1$ED)
+
+ED_test1 <- ED_test
+ED_test1$ED <- 10**ED_test1$logED
+median(ED_test1$ED)
+
 ad.test(ED_all$logED)
 ad.test(ED_agna$logED)
 ad.test(ED_amph$logED)
@@ -108,7 +258,6 @@ ad.test(ED_che$logED)
 ad.test(ED_chl$logED)
 ad.test(ED_chon$logED)
 ad.test(ED_col$logED)
-ad.test(ED_croc$logED)
 ad.test(ED_dia$logED)
 ad.test(ED_dip$logED)
 ad.test(ED_Euk$logED)
@@ -124,8 +273,7 @@ ad.test(ED_squa$logED)
 ad.test(ED_test$logED)
 ad.test(ED_tsa$logED)
 ad.test(ED_vert$logED)
-
-
+shapiro.test(ED_croc$logED)
 
 dis_plot1 <- ggplot(dfED_dis_new1, aes(x = logED,fill = Group)) + geom_density(alpha = 0.6) +
   facet_grid(Group ~ .)+theme(panel.grid.major=element_blank(),
@@ -166,8 +314,9 @@ dis_plot3 <- ggplot(mapping = aes(x)) + geom_density(data = dfED_dis_new3, aes(x
   geom_vline(xintercept = quantile(log(resolved_medianED$median,10), probs = 0.99), color = "black", linetype = "dashed", size = 0.4) 
 
 library(ggpubr)
-Fig1 <- ggarrange(dis_plot1,dis_plot2,dis_plot3,labels = c("","",""),ncol = 3, nrow = 1)
 
+Fig1 <- ggarrange(dis_plot1,dis_plot2,dis_plot3,labels = c("","",""),ncol = 3, nrow = 1)
+dis_plot2
 Fig1 <- ggarrange(dis_plot1, dis_plot2, dis_plot3,
                   labels = c("", "", ""), 
                   ncol = 3, nrow = 1,
@@ -183,56 +332,33 @@ write.csv(x = dfED_dis_new3, file = "/Users/alexgjl/Desktop/final_data/files_for
 
 
 
-
+####################################################################################################################
 ##Figure 3: Estimate PD for selected clades
 library(data.table)
-setwd("/Users/alexgjl/Desktop/final_data")
+setwd("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields")
 median_pd <-  read.csv("pd_median.csv",
                        stringsAsFactors=F, header=T)
-pd1_rows <- fread("pd1.csv", select = 1:4) 
-
-id_list <- c(1, 60673, 63780, 63336, 122046, 172687, 543115, 805308, 972346, 1082356, 
-             1452621, 1595859, 1882225, 2056499, 840050, 840051, 840165, 841421, 875861, 
-             889827, 889596, 889849, 884549, 899851)
-
-filtered_pd <- pd1_rows[pd1_rows$id %in% id_list, ]
-
-library(data.table)
-# get row index
-row_indices <- which(pd1_rows$id %in% filtered_pd$id)
-pd1_rows <- fread("pd1.csv")[row_indices]
-pd2_rows <- fread("pd2.csv")[row_indices]
-pd3_rows <- fread("pd3.csv")[row_indices]
-pd4_rows <- fread("pd4.csv")[row_indices]
-pd5_rows <- fread("pd5.csv")[row_indices]
-pd6_rows <- fread("pd6.csv")[row_indices]
-pd7_rows <- fread("pd7.csv")[row_indices]
-pd8_rows <- fread("pd8.csv")[row_indices]
+df_pd <-  read.csv("selected_24pd.csv",
+                       stringsAsFactors=F, header=T)
 
 
-pd2_rows<- select(pd2_rows,-"V1" ,-"id",-"name",-"ott",-"richness" )
-pd3_rows<- select(pd3_rows,-"V1" ,-"id",-"name",-"ott",-"richness" )
-pd4_rows<- select(pd4_rows,-"V1" ,-"id",-"name",-"ott",-"richness" )
-pd5_rows<- select(pd5_rows,-"V1" ,-"id",-"name",-"ott",-"richness" )
-pd6_rows<- select(pd6_rows,-"V1" ,-"id",-"name",-"ott",-"richness" )
-pd7_rows<- select(pd7_rows,-"V1" ,-"id",-"name",-"ott",-"richness" )
-pd8_rows<- select(pd8_rows,-"V1" ,-"id",-"name",-"ott",-"richness" )
 
-
-df_pd <- cbind(pd1_rows,pd2_rows,pd3_rows,pd4_rows,
-               pd5_rows,pd6_rows,pd7_rows,pd8_rows)
 pd_table24 <- df_pd
-df_pd <- df_pd[, -((ncol(df_pd)-8):ncol(df_pd))]
-colnames(df_pd) <- make.unique(colnames(df_pd))
-df_pd <- select(df_pd,-"V1" ,-"id",-"ott",-"richness")
 
+pd_table24 <- select(pd_table24,-"Unnamed..0" ,-"id",-"median")
+df_pd<-pd_table24
 
 #change pd to long-table
 all_pd_data_l <- df_pd %>%
-  pivot_longer(cols = 2:1001,   
-               names_to = 'Group',  
-               values_to = 'PD')  
+  pivot_longer(
+    cols = starts_with("pd"),   
+    names_to = "Group",         
+    values_to = "PD"           
+  )
+
 all_pd_data_l <- select(all_pd_data_l ,name,PD)
+
+
 df_pd$Group <- c("Biota","Eukaryota","Eukaryota","Eukaryota","Eukaryota","Eukaryota","Eukaryota",
                  "Metazoa", "Vertebrata","Vertebrata","Vertebrata",
                  "Vertebrata","Vertebrata","Vertebrata","Vertebrata",
@@ -263,7 +389,6 @@ library(dplyr)
 library(purrr)
 
 grouped_dfs <- split(pd_table24_l_Grouped, pd_table24_l_Grouped$name)
-
 ci_widths <- map_df(grouped_dfs, function(df) {
   mean_pd <- mean(df$PD, na.rm = TRUE)
   sd_pd <- sd(df$PD, na.rm = TRUE)
@@ -278,22 +403,7 @@ ci_widths <- map_df(grouped_dfs, function(df) {
   )
 })
 ci_widths
-
-
-
-
-
-
 pd_table24_l_Grouped$logPD <-  log(pd_table24_l_Grouped$PD,10)
-
-#rearrange Figrue 3: combine with pd-richness scatter plot
-median_pd$logpd <- log(median_pd$median,10)
-median_pd<- select(median_pd,median,logpd)
-
-median_pd <- cbind(median_pd,nodes_with_pd)
-#get richness from nodes_table
-median_pd$logrich <- log(median_pd$richness,10)
-
 
 #scatter_PD
 pd_table24_l_nonvert <- filter(pd_table24_l_Grouped,pd_table24_l_Grouped$Group!="Vertebrata")
@@ -329,18 +439,57 @@ box_all <- ggplot(pd_table24_l_Grouped, aes(fill = name,y = name, x = log(PD,10)
                                Chelicerata = "#4d97cd",Hymenoptera= "#4d97cd",
                                Coleoptera = "#4d97cd",Diptera= "#4d97cd", 
                                Lepidoptera ="#4d97cd",Vertebrata = "#ea9c9d",
-                               Cyclostomata="#ea9c9d" ,Chondrichthyes ="#ea9c9d" ,Cyclostomata = "#ea9c9d",
+                               Cyclostomata="#ea9c9d" ,Chondrichthyes ="#ea9c9d" ,Actinopterygii = "#ea9c9d",
                                Amphibia = "#ea9c9d" ,Crocodylia = "#ea9c9d",Testudines = "#ea9c9d",
                                Squamata= "#ea9c9d",Mammalia = "#ea9c9d",
                                Aves= "#ea9c9d"))+ theme(legend.title = element_text(size = 30))+
   labs(x="Log10 (PD) Myr",y="")+ theme(text = element_text(size = 17))
+points_df <- data.frame(
+  name = c("Testudines", "Amphibia", "Crocodylia", 
+           "Actinopterygii", "Mammalia", "Aves"),
+  x = c(log10(6520),
+        log10(142670),
+        log10(613),
+        log10(329935),
+        log10(37068),
+        log10(89747))
+)
+
+
+box_all +
+  geom_text(
+    data = points_df,
+    aes(x = x, y = name, label = "X"),
+    color = "black",
+    size = 4,
+    inherit.aes = FALSE
+  )
+
+#Testudines	log(6520,10)
+#Amphibia	 log(142670,10)
+#Crocodylia	 log(613,10)
+#Actinopterygii	 log(329935,10)
+#Mammalia	 log(37068,10)
+#Mammalia	 log(89747,10)
+
+Figure3<-box_all
+Figure3
+
 
 write.csv(x = pd_table24_l_Grouped, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/Figure_3_PDvalues.csv")
 
 
 
-
-scatter_PD <- ggplot(data = median_pd, aes(x = logrich, y = logpd)) + 
+########################################################################################################################
+########################################Supplementary Figure 5 #########################################################
+########################################################################################################################
+nodes_table$richness <- nodes_table$leaf_rgt-nodes_table$leaf_lft+1
+get_rich <- select(nodes_table,id,richness)
+median_pd1 <- merge(median_pd,get_rich,how = "left",on = "id")
+median_pd1$logrich<-log(median_pd1$richness,10)
+median_pd1$logpd<-log(median_pd1$median,10)
+#supplementary figure 5
+scatter_PD <- ggplot(data = median_pd1, aes(x = logrich, y = logpd)) + 
   geom_point(alpha = .5) +
   theme_classic() +
   theme(
@@ -352,8 +501,10 @@ scatter_PD <- ggplot(data = median_pd, aes(x = logrich, y = logpd)) +
   ) +
   xlab("Log10 (Richness)") +
   ylab("Log10 (PD) Myr")
+scatter_PD
 
-cor_result <- cor.test(median_pd$logrich, median_pd$logpd, method = "spearman")
+
+cor_result <- cor.test(median_pd1$logrich, median_pd1$logpd, method = "spearman")
 round(cor_result$estimate, 3)
 signif(cor_result$p.value, 3)
 
@@ -363,11 +514,13 @@ write.csv(x = median_pd, file = "/Users/alexgjl/Desktop/final_data/files_for_plo
 
 
 #Figure 4: EDGE estimation
-setwd("/Users/alexgjl/Desktop/master/项目2/文件/")
-df_iucn <- read.csv("iucn.csv",
-                    stringsAsFactors=F, header=T)
+
+resolved_medianED <-  read.csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/ed_median.csv",
+                               stringsAsFactors=F, header=T)
+iucn <-  read.csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/iucn_for_all_ranked_species.csv")
 resolved_medianED$ott <- leaves_table$ott
 
+df_iucn<- iucn
 df_iucn$ott<-as.numeric(df_iucn$ott)
 resolved_medianED$ott<-as.numeric(resolved_medianED$ott)
 
@@ -385,10 +538,12 @@ ed_table_for_edge <- filter(ed_table_for_edge,ed_table_for_edge$status_code != "
 
 #EDGEi = ln (1 + EDi) + GEi  ln (2)
 ed_table_for_edge$EDGE <- log(1+as.numeric(ed_table_for_edge$median))+log(2)*as.numeric(ed_table_for_edge$status_code)
+ed_table_for_edge1 <- na.omit(ed_table_for_edge)
+
 df_name <- select(leaves_table,ott,name)
 
 
-df_edge <- merge(ed_table_for_edge,df_name,how = "left",on = ott)
+df_edge <- merge(ed_table_for_edge1,df_name,how = "left",on = ott)
 
 df_edge <- filter(df_edge, df_edge$name != "Psephurus gladius")
 df_edge<-df_edge[order(-df_edge$EDGE),]
@@ -401,17 +556,19 @@ ed_top100<-select(ed_top100,id,name,ed,EDGE,status_code)
 
 ed_top100$ED <- round(ed_top100$ed,2)
 ed_top100$EDGE <- round(ed_top100$EDGE,2)
+write.csv(x=ed_top100,file = "/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/top_100_edge_species.csv")
 
 
-#write.csv(x=ed_top100,file = "top_100_edge_species.csv")
-setwd("/Users/alexgjl/Desktop/final_data/")
-ed_100<- read.csv("top100_ed_values.csv",stringsAsFactors=F, header=T)
-ed_values2 <- ed_100[11:1010]
+ed_top100 <-  read.csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/top_100_edge_species.csv")
+
+library(data.table)
+ed_100<- read.csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/top100_ed_values.csv",stringsAsFactors=F, header=T)
+ed_values2 <- ed_100[7:1006]
 colnames(ed_values2) <- c(paste0('X', 0:999))
-ed_100_1 <- ed_100[2:6]
+
+ed_100_1 <- ed_100[2:5]
 ed_top100 <- cbind(ed_100_1,ed_values2)
 ed_top100_l <- pivot_longer(ed_top100,  cols  = X0:X999, names_to = 'Species',values_to = 'ED')
-ed_top100_l$name <- ed_top100_l$name_x
 ed_top100_l<- select(ed_top100_l,id,name,ED)
 
 mean_func <- function(data, indices) {
@@ -431,50 +588,83 @@ df_summary_bootstrap <- ed_top100_l %>%
   ) %>%
   select(name, ci_lower, ci_upper)
 
-ed_100$name <- ed_100$name_x
+
+
 ed_100_ranked <- select(ed_100,id,name,EDGE, status_code,)
 ed_100_ranked<- merge(ed_100_ranked,df_summary_bootstrap,how = "left",on = "name")
-
-geted <- select(ed_top100,id,ed)
+resolved_medianED$ED<-resolved_medianED$median
+geted <- select(resolved_medianED,id,ED)
 ed_100_ranked1<- merge(ed_100_ranked,geted,how = "left",on = "id")
-ed_100_ranked1$ED <- ed_100_ranked1$ed
-ed_100_ranked1<- select(ed_100_ranked1,-ed)
 ed_100_ranked1<-ed_100_ranked1[order(-ed_100_ranked1$EDGE),]
-write.csv(x=ed_100_ranked1,file = "top_100_edge_species_with_CI.csv")
+ed_100_ranked1$rank <- c(1:100)
+
+ed_100_ranked1$`95ci` <- sprintf("%.2f-%.2f", ed_100_ranked1$ci_lower, ed_100_ranked1$ci_upper)
+write.csv(x=ed_100_ranked1,file = "/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/top_100_edge_species_with_CI.csv")
 
 
 ed_top20<- ed_100[0:20, ]
-
-ed_values1 <- ed_top20[11:1010]
+ed_values1 <- ed_top20[7:1006]
 colnames(ed_values1) <- c(paste0('X', 0:999))
-ed_top20_1 <- ed_top20[2:6]
+ed_top20_1 <- ed_top20[1:4]
 ed_top20 <- cbind(ed_top20_1,ed_values1)
 
-ed_top20$Group <- c("Vertebrata","Plantae","Vertebrata","Plantae","Vertebrata",
-                    "Invertebrata","Vertebrata","Vertebrata","Invertebrata","Plantae",
-                    "Invertebrata","Invertebrata","Plantae","Invertebrata","Invertebrata",
-                    "Vertebrata","Invertebrata","Vertebrata","Vertebrata","Vertebrata")
+#check group
+ed_top20$Group <- c("Vertebrata","Plantae","Plantae","Vertebrata","Vertebrata",
+                    "Vertebrata","Invertebrata","Invertebrata","Invertebrata","Vertebrata",
+                    "Invertebrata","Invertebrata","Invertebrata","Invertebrata","Invertebrata",
+                    "Plantae","Invertebrata","Vertebrata","Invertebrata","Invertebrata")
 
 ed_top20_l <- pivot_longer(ed_top20,  cols  = X0:X999, names_to = 'Species',values_to = 'ED')
-ed_top20_l$name<- ed_top20_l$name_x
 ed_top20_l <- select(ed_top20_l,name,ED,Group)
 
-ed_top20_l$name <- factor(ed_top20_l$name,levels = c("Platysternon megacephalum","Latonia nigriventer","Crotaphatrema lamottei","Symmetromphalus hageni","Leiopelma archeyi",
-                                                     "Nanocopia minuta","Antrisocopia prehensilis","Geothallus tuberosus" ,"Eostemmiulus caecus","Euastacus girurmulayn",
-                                                     "Microcycas calocoma","Mictocaris halope" ,"Dermatemys mawii","Erymnochelys madagascariensis","Acharax alinae" ,
-                                                     "Acipenser sturio","Galaxaura barbata","Neoceratodus forsteri","Mankyua chejuensis","Latimeria chalumnae"))
+ed_top20_l$name <- factor(ed_top20_l$name,levels = c("Symmetromphalus hageni","Acharax alinae","Scaphirhynchus albus" ,"Aneuretus simoni","Geothallus tuberosus" ,
+                                                     "Eostemmiulus caecus" ,"Nanocopia minuta" ,"Euastacus girurmulayn","Margaritifera auricularia","Antrisocopia prehensilis",
+                                                     "Erymnochelys madagascariensis","Mictocaris halope" ,"Margaritifera marocana",
+                                                     "Margaritifera hembeli","Acipenser oxyrinchus","Acipenser sturio",
+                                                     "Neoceratodus forsteri","Mankyua chejuensis","Galaxaura barbata","Latimeria chalumnae"))
 
 
 ed_top20_l$Group <- factor(ed_top20_l$Group,levels = c("Plantae","Invertebrata","Vertebrata"))
 
 
-Fig6 <- ggplot(ed_top20_l, aes(y = name, x = ED,fill = Group)) + 
+Fig4 <- ggplot(ed_top20_l, aes(y = name, x = ED,fill = Group)) + 
   geom_boxplot(alpha = 0.6)+theme_classic()+xlim(0,500)+ theme(text = element_text(size = 15))+labs(x="ED (Myr)",y="")+
   scale_fill_manual(values = c(Plantae= "grey",Vertebrata = "#ea9c9d",
                                Invertebrata = "#4d97cd"))
-Fig6 
+Fig4
+rikki_ed <-  read.csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/Rikki_estimated_ED_with_ID.csv",
+                      stringsAsFactors=F, header=T)
+rikki_ed
 
+points_df <- merge(
+  ed_top20_l, 
+  rikki_ed[, c("name", "ED")], 
+  by = "name", 
+  all.x = TRUE, 
+  suffixes = c("", "_rikki")
+)
 
+Fig4 <- ggplot(ed_top20_l, aes(y = name, x = ED, fill = Group)) + 
+  geom_boxplot(alpha = 0.6) +
+  theme_classic() +
+  xlim(0,500) +
+  theme(text = element_text(size = 15)) +
+  labs(x="ED (Myr)", y="") +
+  scale_fill_manual(values = c(
+    Plantae = "grey",
+    Vertebrata = "#ea9c9d",
+    Invertebrata = "#4d97cd"
+  )) +
+  # 在这里加红点
+  geom_text(
+    data = points_df[!is.na(points_df$ED_rikki), ],
+    aes(x = ED_rikki, y = name, label = "X"),
+    color = "black",
+    size = 4,
+    inherit.aes = FALSE
+  )
+  
+Fig4
 write.csv(x = ed_top20_l, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/Figure_4_EDGEvalues.csv")
 
 
@@ -485,76 +675,102 @@ write.csv(x = ed_top20_l, file = "/Users/alexgjl/Desktop/final_data/files_for_pl
 #Supplementary Figure 2
 qq1<- ggplot(ED_all, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_all$Group)
+
 qq2<- ggplot(ED_Euk, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_Euk$Group)
+
 qq3<- ggplot(ED_tsa, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_tsa$Group)
 qq4<- ggplot(ED_dia, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_dia$Group)
 qq5<- ggplot(ED_spe, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_spe$Group)
 qq6<- ggplot(ED_chl, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_chl$Group)
 qq7<- ggplot(ED_hol, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_hol$Group)
 qq8<- ggplot(ED_met, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_met$Group)
 qq9<- ggplot(ED_mol, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_mol$Group)
 qq10<- ggplot(ED_che, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_che$Group)
 qq11<- ggplot(ED_hym, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_hym$Group)
 qq12<- ggplot(ED_col, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_col$Group)
 qq13<- ggplot(ED_dip, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_dip$Group)
 qq14<- ggplot(ED_lep, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_lep$Group)
 qq15<- ggplot(ED_vert, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_vert$Group)
 qq16<- ggplot(ED_agna, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_agna$Group)
 qq17<- ggplot(ED_chon, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_chon$Group)
 qq18<- ggplot(ED_oste, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_oste$Group)
 qq19<- ggplot(ED_amph, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_amph$Group)
 qq20<- ggplot(ED_croc, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_croc$Group)
 qq21<- ggplot(ED_test, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_test$Group)
 qq22<- ggplot(ED_squa, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_squa$Group)
 qq23<- ggplot(ED_mam, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_mam$Group)
 qq24<- ggplot(ED_ave, aes(sample = logED)) +
   stat_qq() +
-  stat_qq_line()
+  stat_qq_line()+
+  ggtitle(ED_ave$Group)
 FigS2<- ggarrange(qq1,qq2,qq3,qq4,qq5,qq6,qq7,qq8,qq9,qq10,qq11,qq12,
                   qq13,qq14,qq15,qq16,qq17,qq18,qq19,qq20,qq21,qq22,qq23,qq24,
                   ncol = 4, nrow = 6)
@@ -669,7 +885,8 @@ write.csv(x = within_hymenoptera1, file = "/Users/alexgjl/Desktop/final_data/fil
 
 
 #Supplementary Figure 6
-setwd("/Users/alexgjl/Desktop/final_data/")
+library(gridExtra)
+setwd("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/")
 resolved_medianED <-  read.csv("ed_median.csv",
                                stringsAsFactors=F, header=T)
 
@@ -734,9 +951,14 @@ ED_coral <- get_ED(df10)
 ED_chon <- get_ED(df12)
 ED_gymn<-get_ED(df14)
 
+pre_ed_all<- rbind(ED_amp,ED_aves,ED_mam,ED_test,
+                   ED_squa,ED_croc,ED_coral,ED_chon,ED_gymn)
+df_names <- select(leaves_table,id,name)
+pre_ed_all_with_id <- merge(pre_ed_all,df_names,how = "left", on = name)
+
 #introduce percentage error here
 #get name for resolved ED:
-df_names <- select(leaves_table,id,name)
+
 resolved_medianED <- merge(df_names,resolved_medianED,how = "left", on = id)
 ED_all <- select(resolved_medianED,name,logED)
 
@@ -819,6 +1041,7 @@ ED_aves1$Group<- rep("Aves",times = )
 df_s6 <- rbind(ED_gymn1,ED_coral1,ED_chon1,ED_amp1,
                ED_croc1,ED_test1,ED_squa1,ED_mam1,ED_aves1)
 write.csv(x = df_s6, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/FigureS6_ED_comparison.csv")
+write.csv(x = pre_ed_all_with_id, file = "/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/Rikki_estimated_ED_with_ID.csv")
 
 
 #compare edge
@@ -906,8 +1129,6 @@ scatter_comparison_EDGE(EDGE_test,"Testudines")
 scatter_comparison_EDGE(EDGE_squa,"Squamata")
 scatter_comparison_EDGE(EDGE_mam,"Mammalia")
 scatter_comparison_EDGE(EDGE_aves,"Aves")
-install.packages("gridExtra")
-library(gridExtra)
 
 
 grid.arrange(scatter_comparison_EDGE(EDGE_gymn,"Gymnosperm"), scatter_comparison_EDGE(EDGE_coral,"Cnidaria"),
@@ -954,11 +1175,13 @@ dfED_dis_new1<- merge(dfED_dis_new1,pop,how = "left",on = "id")
 dfED_dis_new2<- merge(dfED_dis_new2,pop,how = "left",on = "id")
 dfED_dis_new3<- merge(dfED_dis_new3,pop,how = "left",on = "id")
 
+seeedtsa <- filter(ED_tsa,ED_tsa$logED > 1.696429)
 
+ED_all$ED <- 10**ED_all$logED
 compare_ED <- function(df) {
-  Q50<- quantile(resolved_medianED$median, probs = 0.5)
-  Q95<- quantile(resolved_medianED$median, probs = 0.95)
-  Q99<- quantile(resolved_medianED$median, probs = 0.99)
+  Q50<- quantile(ED_all$ED, probs = 0.5)
+  Q95<- quantile(ED_all$ED, probs = 0.95)
+  Q99<- quantile(ED_all$ED, probs = 0.99)
   ls_quantile <- vector("list", length = nrow(df))
   for (i in 1:nrow(df)) {
     ed_value <- df$ed[i]
@@ -981,7 +1204,7 @@ dfED_dis3 <- compare_ED(dfED_dis_new2)
 dfED_dis4 <- compare_ED(dfED_dis_new3)
 
 
-analyze_quantile_enrichment <- function(df, resolved_median_ed) {
+analyze_quantile_enrichment <- function(df, ED_all) {
   library(dplyr)
   library(purrr)
   summary_df <- df %>%
@@ -998,8 +1221,8 @@ analyze_quantile_enrichment <- function(df, resolved_median_ed) {
     mutate(
       
       random_counts = list(replicate(1000, {
-        sampled <- sample(resolved_median_ed$median, size = num_species, replace = FALSE)
-        sum(sampled >= quantile(resolved_medianED$median, probs = 0.99))
+        sampled <- sample(ED_all$ED, size = num_species, replace = FALSE)
+        sum(sampled >= quantile(ED_all$ED, probs = 0.99))
       })),
       # prop_high 和 prop_low
       prop_high = mean(unlist(random_counts) >= num_top_99),
@@ -1014,9 +1237,9 @@ analyze_quantile_enrichment <- function(df, resolved_median_ed) {
 
 
 
-dfED_dis2_2 <- analyze_quantile_enrichment(dfED_dis2,resolved_medianED)
-dfED_dis3_2 <- analyze_quantile_enrichment(dfED_dis3,resolved_medianED)
-dfED_dis4_2 <- analyze_quantile_enrichment(dfED_dis4,resolved_medianED)
+dfED_dis2_2 <- analyze_quantile_enrichment(dfED_dis2,ED_all)
+dfED_dis3_2 <- analyze_quantile_enrichment(dfED_dis3,ED_all)
+dfED_dis4_2 <- analyze_quantile_enrichment(dfED_dis4,ED_all)
 
 
 dfED_dis2_final <- merge(dfED_dis2,dfED_dis2_2,how = "Group",on = "left")
@@ -1118,10 +1341,12 @@ p4 <- ggplot(dfED_dis4, aes(x = Group, y = log(ed,10)))  +
     size = 7,
     fontface = "bold"
   )
-p4
-quantile(resolved_medianED$median, probs = 0.5)
-quantile(resolved_medianED$median, probs = 0.95)
-quantile(resolved_medianED$median, probs = 0.99)
+
+quantile(ED_all$ED, probs = 0.5)
+quantile(ED_all$ED, probs = 0.95)
+quantile(ED_all$ED, probs = 0.99)
+quantile(ED_all$logED, probs = 0.95)
+quantile(ED_all$logED, probs = 0.99)
 
 library(ggpubr)
 Fig2 <- ggarrange(p2,p3,p4,labels = c("","",""),ncol = 1, nrow = 3)
@@ -1129,15 +1354,10 @@ Fig2
 
 
 
-
-
 write.csv(x = rbind(dfED_dis2_final,dfED_dis3_final,dfED_dis4_final), file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/Figure2_ED_lables.csv")
 write.csv(x = dfED_dis2, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/Figure2_ED_Eukaryota.csv")
 write.csv(x = dfED_dis3, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/Figure2_ED_Metazoa.csv")
 write.csv(x = dfED_dis4, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/Figure2_ED_Vertebrata.csv")
-
-
-
 #file of ed scores
 
 
@@ -1149,12 +1369,19 @@ write.csv(x = dfED_dis4, file = "/Users/alexgjl/Desktop/final_data/files_for_plo
 
 
 ##Supplemenrary Figure 4
-setwd("/Users/alexgjl/Desktop/final_data")
-ave_ed_table24 <-  read.csv("average_ed_table_1000_reps.csv",
+mean_tsa<- filter(ave_ed_table24_l,name =="TSAR")
+median(mean_tsa$ED)
+mean_mam<- filter(ave_ed_table24_l,name =="Mammalia")
+median(mean_mam$ED)
+mean_ave<- filter(ave_ed_table24_l,name =="Aves")
+median(mean_ave$ED)
+
+ave_ed_table24 <-  read.csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/average_ed_table_24(real_parent).csv",
                             stringsAsFactors=F, header=T)
 
 getname <- select(nodes_table,id,name)
 ave_ed_table24 <- merge(ave_ed_table24,getname, how = "left",on = id)
+
 ave_ed_table24_l <- pivot_longer(ave_ed_table24, cols = X0:X999, 
                                  names_to = 'Group',values_to = 'ED')
 
@@ -1183,6 +1410,25 @@ FigS4<- ggplot(ave_ed_table24_l , aes(fill = name,y = name, x = log(ED,10))) +
   labs(x="Log10 (Average ED) Myr",y="")+ theme(text = element_text(size = 17))
 FigS4
 
+ave_ed_ave <- filter(ave_ed_table24_l,ave_ed_table24_l$name == "Aves")
+median(ave_ed_ave$ED)
+ave_ed_mam <- filter(ave_ed_table24_l,ave_ed_table24_l$name == "Mammalia")
+median(ave_ed_mam$ED)
+ave_ed_cro <- filter(ave_ed_table24_l,ave_ed_table24_l$name == "Crocodylia")
+median(ave_ed_cro$ED)
+ave_ed_squ <- filter(ave_ed_table24_l,ave_ed_table24_l$name == "Squamata")
+median(ave_ed_squ$ED)
+ave_ed_tes <- filter(ave_ed_table24_l,ave_ed_table24_l$name == "Testudines")
+median(ave_ed_tes$ED)
+ave_ed_amp <- filter(ave_ed_table24_l,ave_ed_table24_l$name == "Amphibia")
+median(ave_ed_amp$ED)
+ave_ed_fish <- filter(ave_ed_table24_l,ave_ed_table24_l$name == "Actinopterygii")
+median(ave_ed_fish$ED)
+ave_ed_shark <- filter(ave_ed_table24_l,ave_ed_table24_l$name == "Chondrichthyes")
+median(ave_ed_shark$ED)
+ave_ed_cyc <- filter(ave_ed_table24_l,ave_ed_table24_l$name == "Cyclostomata")
+median(ave_ed_cyc$ED)
+
 write.csv(x = ave_ed_table24_l, file = "/Users/alexgjl/Desktop/final_data/files_for_plotting/FigureS4_averageED.csv")
 
 
@@ -1191,15 +1437,18 @@ write.csv(x = ave_ed_table24_l, file = "/Users/alexgjl/Desktop/final_data/files_
 #Supplementary Figure 8 
 #need to be update since top20 edge species has been updated!!
 
-df_phylo <-  read.csv("/Users/alexgjl/Desktop/final_data/phyloinfo_for_edge20_with_ed.csv",
+df_phylo <-  read.csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/phyloinfo_for_edge20_with_ed.csv",
                       stringsAsFactors=F, header=T)
 getname <- select(leaves_table,id,name)
 df_phylo <- merge(df_phylo,getname, how = "left",on = id)
 df_phylo$id <- as.factor(df_phylo$id)
-ed_top20$rank = c('No.1','No.2','No.3',"No.4","No.5","No.6","No.7","No.8","No.9",'No.10',
+
+getmane<- select(leaves_table,id,name)
+ed_top20$rank = c('No.1','No.2','ed_top20$rank = c('No.1','No.2','ed_top20$rank = c('No.1','No.2','No.3',"No.4","No.5","No.6","No.7","No.8","No.9",'No.10',
                   'No.11','No.12','No.13','No.14','No.15','No.16','No.17','No.18','No.19','No.20')
 ed_top20$rank2 = c(1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20)
-ed_top20$name<- ed_top20$name_x
+
+ed_top20<- merge(ed_top20,getname, how = "left", on = "id")
 getrank <- select(ed_top20,name,rank,rank2)
 
 df_phylo <- merge(df_phylo,getrank, how = "left",on = name)
@@ -1391,15 +1640,10 @@ setwd("/Users/alexgjl/Desktop/final_data/")
 selected_clades <-  read.csv("sampled_clades.csv",
                              stringsAsFactors=F, header=T)
 
-setwd("/Users/alexgjl/Desktop/final_data")
-median_pd <-  read.csv("pd_median.csv",
+median_pd <-  read.csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/pd_median.csv",
                        stringsAsFactors=F, header=T)
-resolved_medianED <-  read.csv("ed_median.csv",
-                               stringsAsFactors=F, header=T)
-ED_all <- resolved_medianED
-ED_all$logED <- log(ED_all$median,10)
-ED_all$Group <- rep("Biota",times = )
 
+#use ED-all
 #get ed values based on the given name of clades
 get_ED <- function(name) {
   leaf_lft <- selected_clades[selected_clades$name == name, "leaf_lft"]
@@ -1521,7 +1765,7 @@ make_ed_distributions <- function(df, ED_all) {
   return(dis_figures)
 }
 ED_dis_figures <-make_ed_distributions(selected_clades,ED_all)
-ED_dis_figures
+ED_dis_figures[[1]]
 
 
 
@@ -1537,7 +1781,7 @@ do.call(grid.arrange, c(ED_dis_figures, ncol = 5))
 #———————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————————
 #threatened_pd_analysis
 
-setwd("/Users/alexgjl/Desktop/final_data/threatened_pd_worse2/")
+setwd("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields")
 
 
 th_euk <-  read.csv("threatenedpd_euk.csv",
@@ -1562,8 +1806,10 @@ list_holow<- as.numeric(list_holow)
 th_tsaw <-  read.csv("threatenedpd_tsa_w.csv",
                      stringsAsFactors=F, header=T)
 th_tsaw <- select(th_tsaw,-X)
-list_tsa<- as.list(th_tsaw)
-list_tsa<- as.numeric(list_tsa)
+list_tsaw<- as.list(th_tsaw)
+list_tsaw<- as.numeric(list_tsaw)
+median(list_tsaw)
+
 
 th_chlw <-  read.csv("threatenedpd_chl_w.csv",
                      stringsAsFactors=F, header=T)
@@ -1584,6 +1830,8 @@ th_diaw <-  read.csv("threatenedpd_dia_w.csv",
 th_diaw <- select(th_diaw,-X)
 list_diaw<- as.list(th_diaw)
 list_diaw<- as.numeric(list_diaw)
+median(list_diaw)
+
 
 th_chl <-  read.csv("threatenedpd_chl.csv",
                     stringsAsFactors=F, header=T)
@@ -1611,8 +1859,6 @@ list_dia<- as.numeric(list_dia)
 
 th_tsa <-  read.csv("threatenedpd_tsa.csv",
                     stringsAsFactors=F, header=T)
-
-
 
 th_mol <-  read.csv("threatenedpd_mol.csv",
                     stringsAsFactors=F, header=T)
@@ -1644,7 +1890,7 @@ th_hym <-  read.csv("threatenedpd_hym.csv",
 th_hym <- select(th_hym,-X)
 list_hym <- as.list(th_hym)
 list_hym<- as.numeric(list_hym)
-
+median(list_hym)
 th_hymw<-  read.csv("threatenedpd_hym_w.csv",
                     stringsAsFactors=F, header=T)
 th_hymw <- select(th_hymw,-X)
@@ -1656,6 +1902,7 @@ th_dip <-  read.csv("threatenedpd_dip.csv",
 th_dip <- select(th_dip,-X)
 list_dip <- as.list(th_dip)
 list_dip<- as.numeric(list_dip)
+median(list_dip)
 
 th_lep <-  read.csv("threatenedpd_lep.csv",
                     stringsAsFactors=F, header=T)
@@ -1721,13 +1968,13 @@ th_chon <-  read.csv("threatenedpd_shark_ray.csv",
 th_chon <- select(th_chon,-X)
 list_chon <- as.list(th_chon)
 list_chon<- as.numeric(list_chon)
-
+median(list_chon)
 th_chonw <-  read.csv("threatenedpd_shark_ray_w.csv",
                       stringsAsFactors=F, header=T)
 th_chonw <- select(th_chonw,-X)
 list_chonw <- as.list(th_chonw)
 list_chonw<- as.numeric(list_chonw)
-
+median(list_chonw)
 
 th_oste <-  read.csv("threatenedpd_bonyfish.csv",
                      stringsAsFactors=F, header=T)
@@ -1739,7 +1986,7 @@ th_ostew <-  read.csv("threatenedpd_bonyfish_w.csv",
 th_ostew <- select(th_ostew,-X)
 list_ostew <- as.list(th_ostew)
 list_ostew<- as.numeric(list_ostew)
-
+median(list_ostew)
 
 th_amph <-  read.csv("threatenedpd_amph.csv",
                      stringsAsFactors=F, header=T)
@@ -1751,6 +1998,7 @@ th_amphw <-  read.csv("threatenedpd_amph_w.csv",
 th_amphw <- select(th_amphw,-X)
 list_amphw <- as.list(th_amphw)
 list_amphw<- as.numeric(list_amphw)
+median(list_amphw)
 
 th_croc <-  read.csv("threatenedpd_croc.csv",
                      stringsAsFactors=F, header=T)
@@ -1774,6 +2022,8 @@ th_testw <-  read.csv("threatenedpd_test_w.csv",
 th_testw <- select(th_testw,-X)
 list_testw <- as.list(th_testw)
 list_testw<- as.numeric(list_testw)
+median(list_testw)
+median(list_test)
 
 th_squa <-  read.csv("threatenedpd_squa.csv",
                      stringsAsFactors=F, header=T)
@@ -1810,42 +2060,10 @@ list_avew <- as.list(th_avew)
 list_avew<- as.numeric(list_avew)
 
 
-setwd("/Users/alexgjl/Desktop/final_data/threatened_pd_worse")
-csv_files <- list.files("/Users/alexgjl/Desktop/final_data/threatened_pd_worse", pattern = "\\.csv$", full.names = TRUE)
-# 读取所有CSV文件并进行处理
-df_list <- lapply(csv_files, function(file) {
-  df <- read.csv(file, stringsAsFactors = FALSE)
-  
-
-  df <- df[, -1, drop = FALSE]
-  
-
-  file_name <- tools::file_path_sans_ext(basename(file))
-  
-
-  if (ncol(df) == 1) {
-    df <- as.data.frame(matrix(rep(df[[1]], 1000), ncol = 1000, byrow = FALSE))
-  }
-  
-  
-  colnames(df) <- paste0("V", seq_len(ncol(df)))
-  
- 
-  df$File_Name <- file_name
-  
-  return(df)
-})
-# 
-merged_df <- do.call(rbind, df_list)
-# 
-row_medians <- apply(merged_df[, 1:1000], 1, median, na.rm = TRUE)
-merged_df$Row_Median <- row_medians
-merged_df1 <- select(merged_df,Row_Median,File_Name)
-write.csv(merged_df, "threatened_pd_worse.csv", row.names = FALSE)
 
 
 
-setwd("/Users/alexgjl/Desktop/final_data/")
+setwd("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields")
 th_met0 <-  read.csv("threatenedpd_metazoa_w0.csv",
                      stringsAsFactors=F, header=T)
 th_met1 <-  read.csv("threatenedpd_metazoa_w1.csv",
@@ -1872,36 +2090,34 @@ th_met11 <-  read.csv("threatenedpd_metazoa_w11.csv",
                       stringsAsFactors=F, header=T)
 th_met <- rbind(th_met0,th_met1,th_met2,th_met3,th_met4,th_met5,
                 th_met6,th_met7,th_met8,th_met9,th_met10,th_met11)
-write.csv(x = th_met, file = "/Users/alexgjl/Desktop/final_data/threatened_pd_worse2/threatenedpd_metazoa_w.csv")
+write.csv(x = th_met, file = "/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/threatenedpd_metazoa_w.csv")
 th_met <- select(th_met,-X)
 th_met <- as.data.frame(t(colSums(th_met)))
 list_met <- as.list(th_met)
 list_met<- as.numeric(list_met)
+median(list_met)
 
-setwd("/Users/alexgjl/Desktop/final_data/threatened_pd_worse2")
+setwd("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields")
+
 th_euk00 <-  read.csv("threatenedpd_euk_w00.csv",
-                      stringsAsFactors=F, header=T)
+                     stringsAsFactors=F, header=T)
 th_euk01 <-  read.csv("threatenedpd_euk_w01.csv",
-                      stringsAsFactors=F, header=T)
+                     stringsAsFactors=F, header=T)
 th_euk02 <-  read.csv("threatenedpd_euk_w02.csv",
-                      stringsAsFactors=F, header=T)
+                     stringsAsFactors=F, header=T)
 th_euk03 <-  read.csv("threatenedpd_euk_w03.csv",
-                      stringsAsFactors=F, header=T)
+                     stringsAsFactors=F, header=T)
 th_euk04 <-  read.csv("threatenedpd_euk_w04.csv",
-                      stringsAsFactors=F, header=T)
+                     stringsAsFactors=F, header=T)
 th_euk05 <-  read.csv("threatenedpd_euk_w05.csv",
                       stringsAsFactors=F, header=T)
-th_euk06 <-  read.csv("threatenedpd_euk_w06.csv",
-                      stringsAsFactors=F, header=T)
-th_euk07 <-  read.csv("threatenedpd_euk_w07.csv",
-                      stringsAsFactors=F, header=T)
-th_euk08 <-  read.csv("threatenedpd_euk_w08.csv",
-                      stringsAsFactors=F, header=T)
-th_euk09 <-  read.csv("threatenedpd_euk_w09.csv",
-                      stringsAsFactors=F, header=T)
-th_euk0<- rbind(th_euk00,th_euk03,
-                th_euk04,th_euk05,th_euk06,
-                th_euk07,th_euk08,th_euk09)
+
+
+th_euk0<- rbind(th_euk00,th_euk01,
+                th_euk02,th_euk03,th_euk04,
+                th_euk05)
+
+
 th_euk1 <-  read.csv("threatenedpd_euk_w1.csv",
                      stringsAsFactors=F, header=T)
 th_euk2 <-  read.csv("threatenedpd_euk_w2.csv",
@@ -1921,9 +2137,10 @@ th_euk8 <-  read.csv("threatenedpd_euk_w8.csv",
 th_euk9 <-  read.csv("threatenedpd_euk_w9.csv",
                      stringsAsFactors=F, header=T)
 th_euk10 <-  read.csv("threatenedpd_euk_w10.csv",
-                      stringsAsFactors=F, header=T)
+                     stringsAsFactors=F, header=T)
 th_euk11 <-  read.csv("threatenedpd_euk_w11.csv",
-                      stringsAsFactors=F, header=T)
+                     stringsAsFactors=F, header=T)
+
 
 th_euk <- rbind(th_euk0,th_euk1,th_euk2,
                 th_euk3,th_euk4,th_euk5,
@@ -1934,3 +2151,66 @@ th_euk <- as.data.frame(t(colSums(th_euk)))
 list_euk <- as.list(th_euk)
 list_euk<- as.numeric(list_euk)
 median(list_euk)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##table1 data
+##get iucn ranked species
+iucn <-  read.csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/latest_iucn_data_all.csv")
+
+getid <- select(leaves_table,id,iucn)
+iucn$iucn <- iucn$speciesID
+iucn_withid <- merge(iucn,getid,how = "left",on = "iucn")
+iucn_threatened <- filter(iucn_withid, !category %in% c("LC", "NT", "DD"))
+
+ratio_id_in_iucn <- function(df, iucn_withid) {
+  nums <- sum(df$id %in% iucn_withid$id)
+  return(nums / nrow(df))
+}
+
+ratio_id_threatened <- function(df, iucn_threatened) {
+  nums <- sum(df$id %in% iucn_threatened$id)
+  return(nums / nrow(df))
+}
+
+
+
+ratio_id_threatened(ED_ave, iucn_threatened)
+
+
+
+##get proportion of dated nodes
+dated_nodes <-  read.csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/df_nodes_with_proportion_of_dated&realparent.csv")
+nodes_table <- select(nodes_table ,id,name
+                      )
+dated_nodes <- merge(dated_nodes,nodes_table,how = "left",on ="id")
+
+target_names <- c(
+  "Aves","Mammalia","Squamata","Testudines","Crocodylia","Amphibia",
+  "Actinopterygii","CHONDRICHTHYES","CYCLOSTOMATA","Vertebrata",
+  "Lepidoptera","Diptera","Coleoptera","Hymenoptera","Chelicerata",
+  "Mollusca","Metazoa","Holomycota","Chloroplastida","Spermatophyta",
+  "Diaphoretickes","TSAR","Eukaryota"
+)
+
+filtered <- dated_nodes[dated_nodes$name %in% target_names, ]
+filtered$proportion <- filtered$dated_nodes/filtered$all_descendants
+
+nodedates <-  read.csv("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields/latest_node_dates(real_parent)_3.0.csv")
+nodedates<- merge(nodedates,nodes_table,how = "left",on ="id")
+
+
+pdhym <- filter(pd_table24_l_Grouped,name == "Hymenoptera")
+pddip <- filter(pd_table24_l_Grouped,name == "Diptera")
+pdcyc <- filter(pd_table24_l_Grouped,name == "Cyclostomata")

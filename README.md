@@ -45,6 +45,11 @@ If a species extinct, the unique evolutionary history represented by this specie
 # phyloinfo_for_edge20_species.py
 This code will find all ancestors(node) for each species among the top 20 EDGE species. Then it calculate the ED scores of this node.
 
+# get-iucn-status.py, check_iucn.py, check_multilatest_iucn.py
+The code get-iucn-status.py can get the IUCN conservation status for a list of given species through API token. You need to fill in your API token before running this code.
+The conservation status obtained from get-iucn-status.py are not always the latest evaluated one. In this case, we use check_iucn.py to check those conservation status which is not the latest. Then, if this species does not have the latest evaluation, we use the latest published status. If it does have a latest evaluation, we use the true latest value to replace the false latest value.
+It is also possible that one species have multiple evaluations marked as latest. In this case, we use check_multilatest_iucn.py. If this species have multiple conservation status marked as true, we go through these values and choose the most recent published one.
+
 
 # figure_script.R 
 All the figures in this paper (except figure 5 and figure S1) were generated through this code. All input files required for this script is provided with the manuscript. All datasets for making figures are available here: https://zenodo.org/records/16879538.

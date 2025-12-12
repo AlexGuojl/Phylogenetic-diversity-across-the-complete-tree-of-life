@@ -11,16 +11,17 @@ import time
 
 
 
-df_leaves = pd.read_csv("updated_ordered_leaves_2.0.csv",low_memory=False)
+df_leaves = pd.read_csv("updated_ordered_leaves_3.0.csv",low_memory=False)
 leaves1 = pd.DataFrame(df_leaves,columns = ["id","parent","ott","real_parent"])
-df_nodes = pd.read_csv("updated_ordered_nodes_2.0.csv",low_memory=False)
+df_nodes = pd.read_csv("updated_ordered_nodes_3.0.csv",low_memory=False)
 nodes1 = pd.DataFrame(df_nodes,columns = ["id","ott","parent","real_parent","node_rgt","leaf_lft","leaf_rgt","age"])
 
 nodes = pd.DataFrame(nodes1, columns = ["Unnamed: 0","id","parent","leaf_lft","leaf_rgt","unnamed:0","age"])
 nodes = nodes.fillna(0)
 
 ed_vals = pd.read_csv("ed_values.csv",low_memory=False)
-ed_values  = ed_vals.drop(ed_vals.columns[0], axis=1)
+cols_to_select = [f"ed{i}" for i in range(1, 1001)]
+ed_values = ed_vals[cols_to_select]
 #ed_values = ed_values.drop(columns = ["id","parent","ed","sum_ed","ott","Unnamed: 0"])
 def find_des(a): ##return 1/descendants for a node id in the whole table
     if a == -1:
@@ -97,7 +98,7 @@ def node_terminal(node_id):###checked correct
 
 
 def ed_node_realp(node_id): #all the id are nodes, so no need to use leaf_realparent
-    if find_age_for_pd_estimate(node_id)== 4025:
+    if find_age_for_pd_estimate(node_id)== 4246.666667:
         return(0)
     if find_age_for_pd_estimate(node_id)>0:
         list_try = []#list of parents
@@ -297,7 +298,7 @@ getparent = pd.DataFrame(leaves1,columns = ["id","parent","real_parent"])
 nodes_no_age = pd.DataFrame(nodes,columns = ["Unnamed: 0","id","parent","leaf_lft","leaf_rgt","unnamed:0"])
 
 ##always been updated with the latest json data
-ages = pd.read_csv("latest_node_dates(real_parent)_2.0.csv", low_memory=False)
+ages = pd.read_csv("latest_node_dates(real_parent)_3.0.csv", low_memory=False)
 
 
 
@@ -326,7 +327,7 @@ ages_selected = pd.DataFrame(ages_selected,columns = ['id', 'age'])
     
 ages_bootstrap_final = pd.merge(nodes_no_age, ages_selected, how = "left",on = "id")
 ages_bootstrap_final = ages_bootstrap_final.fillna(0)
-ages_bootstrap_final.iat[0,6] = 4025.0#give age to the root/node1, always here
+ages_bootstrap_final.iat[0,6] = 4246.666667#give age to the root/node1, always here
 ages_bootstrap_final["age"] = pd.to_numeric(ages_bootstrap_final["age"])
 ##see whether there is descendants that has a larger age than parents
 for row in ages_bootstrap_final[ages_bootstrap_final["age"]>0][1:].itertuples():
@@ -360,12 +361,15 @@ for row in ages_bootstrap_final[ages_bootstrap_final["age"]>0][1:].itertuples():
 
 ####
 #select the 24 groups
-
-df_iucn1 = pd.read_csv("all_iucn_ranked_species.csv",low_memory=False)
+            ################################################################################ ############################################################
+            ######################################################################需要更新############################################################
+df_iucn1 = pd.read_csv("iucn_for_all_ranked_species.csv",low_memory=False)
 df_iucn2 = df_iucn1[df_iucn1["status_code"] != "LC"]
 all_threatened = df_iucn2[df_iucn2["status_code"] != "NT"]
 all_threatened = all_threatened[all_threatened["status_code"] != "DD"]#skip this skip will give threatened PD in a worse situation in which all DD are regarded as threatened
 all_threatened = pd.merge(all_threatened,getparent,how = "left",on = "id")
+
+
 th_biota = all_threatened
 th_euk = all_threatened[all_threatened["id"] > 59642]
 th_met = all_threatened[all_threatened["id"] >805307]
@@ -547,4 +551,3 @@ df_mam = pd.DataFrame(ls_mam)
 df_mam.to_csv("threatenedpd_mam.csv",encoding = "gbk")
 df_ave = pd.DataFrame(ls_ave)
 df_ave.to_csv("threatenedpd_ave.csv",encoding = "gbk")
-

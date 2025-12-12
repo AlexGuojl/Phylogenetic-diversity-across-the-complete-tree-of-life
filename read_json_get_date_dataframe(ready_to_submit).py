@@ -3,14 +3,14 @@ import numpy as np
 import os
 import re
 
-os.chdir("/Users/alexgjl/Desktop/master/项目2/文件")#"/Users/alexgjl/Desktop/master/project2/field"
+os.chdir("/Users/alexgjl/Desktop/third_submission_to_nc/updated_fields")#"/Users/alexgjl/Desktop/master/project2/field"
 
 ###read into the json field and change it into a dataframe
 
 
 
 #sort the json field
-ages = pd.read_json("updated_node_ages.json")##read into the latest json field
+ages = pd.read_json("/Users/alexgjl/Desktop/third_submission_to_nc/dated_nodes_dump.json")##read into the latest json field
 
 df_ages = pd.DataFrame(ages)
 df_ages['node_ages'] = df_ages['node_ages'].astype(str)
@@ -44,9 +44,9 @@ df_ages_2ott = pd.DataFrame(df_ages_2ott, columns = ["ott1","ott2","ages"])
 
 ##some nodes has ott, but they are not listed as real parent, this part will solve this problem
 
-df_nodes = pd.read_csv("ordered_nodes.csv",low_memory=False)##read into the latest node dates
+df_nodes = pd.read_csv("/Users/alexgjl/Desktop/master/项目2/文件/ordered_nodes.csv",low_memory=False)##read into the latest node dates
 nodes1 = pd.DataFrame(df_nodes,columns = ["id","ott","parent","real_parent","node_rgt","leaf_lft","leaf_rgt","age"])
-df_leaves = pd.read_csv("ordered_leaves.csv",low_memory=False)##read into the latest nodes
+df_leaves = pd.read_csv("/Users/alexgjl/Desktop/master/项目2/文件/ordered_leaves.csv",low_memory=False)##read into the latest nodes
 leaves1 = pd.DataFrame(df_leaves,columns = ["id","parent","ott","real_parent",])
 agetable1 = df_ages_2ott
 
@@ -84,7 +84,7 @@ for row in leaves1.itertuples():
 
 df_leaves["real_parent"] = ls_realp_leaves#df leaves is updated here
 
-#df_leaves.to_csv("updated_ordered_leaves_2.0.csv")#an extra column "Unnamed: 0" is included
+df_leaves.to_csv("updated_ordered_leaves_3.0.csv")#an extra column "Unnamed: 0" is included
 
 
 ls_realp_nodes = []
@@ -117,7 +117,7 @@ for row in nodes1.itertuples():
 
 
 df_nodes["real_parent"] = ls_realp_nodes#df nodes is updated here
-#df_nodes.to_csv("updated_ordered_nodes_2.0.csv",encoding = 'gbk')
+df_nodes.to_csv("updated_ordered_nodes_3.0.csv",encoding = 'gbk')
 
 
 
@@ -213,7 +213,7 @@ ls_id_node = []
 for row in agetable1.itertuples():
     ott1 = int(getattr(row,"ott1"))
     ott2 = int(getattr(row,"ott2"))
-    ls_id_node.append(find_commonancestor(ott1,ott2))##
+    ls_id_node.append(find_commonancestor(ott1,ott2))##这里
     
 agetable1["id"] = ls_id_node##a table of age of 2 ott with date estimates
 
@@ -227,6 +227,8 @@ for row in df_ages2.itertuples():
     listage1.append(row)
     
 df_ages_1ott = pd.DataFrame(listage1)
+
+df_ages_1ott = df_ages_1ott.iloc[3:].reset_index(drop=True)
 df_ages_1ott['ott'] = df_ages_1ott["Index"].map(lambda x:x.split("ott")[1])
 
 all_ages_list2 = []    #list that store the dict of ages
@@ -261,7 +263,7 @@ agetable3 = pd.DataFrame(agetable3,columns = ["ott","id","age"])
 agetable3["ott"] = agetable3["ott"].astype(float)
 
 
-
+#删掉agetable3中和agetable2重合的agels_missed_real_parent
 
 #agetable2
 lsid_2 = agetable2["id"]
@@ -274,6 +276,11 @@ for i in lsid_2:
 for index, row in agetable3.iterrows():
     if row['id'] in ls_overlap_id:
         agetable3 = agetable3.drop(index)
+
+
+
+
+
 
 
 agetable3["ott"] = agetable3["ott"].astype(str)
@@ -293,4 +300,21 @@ agetable = agetable.loc[agetable["id"] > 0]
 ##deal with overlapped node id:
 agetable = agetable.groupby("id")["ages"].apply(lambda x:x.str.cat(sep = ",")).reset_index()
 
-#agetable.to_csv("latest_node_dates(real_parent)_2.0.csv",encoding = "gbk")
+
+
+
+
+
+
+
+#agetable.to_csv("latest_node_dates.csv",encoding = "gbk")
+#48013
+
+
+##make sure that all the id are real parents
+#save the table with a new name
+
+agetable.to_csv("latest_node_dates(real_parent)_3.0.csv",encoding = "gbk")
+
+
+

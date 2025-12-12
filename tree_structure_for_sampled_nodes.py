@@ -8,7 +8,7 @@ from io import StringIO
 
 os.chdir("/Users/alexgjl/Desktop/master/项目2/文件")  # change this to the path that the files existed in your computer
 
-df_nodes = pd.read_csv("updated_ordered_nodes_2.0.csv", low_memory=False)
+df_nodes = pd.read_csv("updated_ordered_nodes_3.0.csv", low_memory=False)
 nodes1 = pd.DataFrame(df_nodes, columns=["id", "ott", "parent", "real_parent", "node_rgt", "leaf_lft", "leaf_rgt", "age"])
 nodes = pd.DataFrame(nodes1, columns=["Unnamed: 0", "id", "parent", "leaf_lft", "leaf_rgt", "unnamed:0", "age"])
 nodes = nodes.fillna(0)

@@ -27,7 +27,7 @@ def find_des(a): ##return 1/descendants for a node id in the whole table
 
 
 def ed_node_realp(node_id): #all the id are nodes, so no need to use leaf_realparent
-    if find_age_for_pd_estimate(node_id)== 4025:
+    if find_age_for_pd_estimate(node_id)== 4246.666667:
         return(0)
     if find_age_for_pd_estimate(node_id)>0:
         list_try = []#list of parents
@@ -82,7 +82,7 @@ def ed_node_realp(node_id): #all the id are nodes, so no need to use leaf_realpa
                 if times == 0:
                     ls_part.append(list_try[ind])
                     ls_des.append(find_des(list_try[ind-1]))
-                    ed_temp = ((find_age_for_pd_estimate(list_try[ind])-(4025-find_missing_PD(node_id)))/len(ls_part))*sum(ls_des)
+                    ed_temp = ((find_age_for_pd_estimate(list_try[ind])-(4246.666667-find_missing_PD(node_id)))/len(ls_part))*sum(ls_des)
                     ls_ed.append(ed_temp)
                     ind += 1
                     times +=1
@@ -101,7 +101,7 @@ def ed_node_realp(node_id): #all the id are nodes, so no need to use leaf_realpa
 
 def find_missing_PD(node_id):#checked accurate already!!
     if find_age_for_pd_estimate(node_id) > 0:
-        return(float(4025-find_age_for_pd_estimate(node_id)))
+        return(float(4246.666667-find_age_for_pd_estimate(node_id)))
     else:
         df_des_node = df_nodes[df_nodes["parent"] == node_id]
         ls_des_age = df_des_node["id"].apply(find_age_for_pd_estimate)#a list of age estimate
@@ -151,7 +151,7 @@ def find_missing_PD(node_id):#checked accurate already!!
             continue
     #print(count_up)
     #print(count_down)
-    return(4025-node_date)
+    return(4246.666667-node_date)
        
 
 
@@ -167,7 +167,7 @@ def find_closest_parents_with_date_PD(a):##find closest node parents that have a
             return([cp,date_estimate])#(a list of id and age estimate)
         else:
             cp = nodes_for_age_function.iat[int(cp)-1,1]
-            #will return 4025 if no parents have age
+            #will return 4246.666667 if no parents have age
 
 
 
@@ -188,15 +188,16 @@ def find_parents_with_date_PD(node_id):##find closest node parents that have a d
 
 
 
-df_leaves = pd.read_csv("updated_ordered_leaves_2.0.csv",low_memory=False)
+df_leaves = pd.read_csv("updated_ordered_leaves_3.0.csv",low_memory=False)
 leaves1 = pd.DataFrame(df_leaves,columns = ["id","parent","ott"])
 
-df_ed = pd.read_csv("ed_boostrap_new2(100).csv",low_memory=False) 
-ed_values = df_ed.drop(columns = ["id","parent","ed","sum_ed","ott","Unnamed: 0"])
-#这里
+df_ed = pd.read_csv("ed_values.csv",low_memory=False) 
+ed_values = df_ed[[col for col in df_ed.columns if col.startswith("ed")]]
 
-ages = pd.read_csv("latest_node_dates(real_parent)_2.0.csv", low_memory=False)
-df_nodes = pd.read_csv("updated_ordered_nodes_2.0.csv",low_memory=False)
+
+
+ages = pd.read_csv("latest_node_dates(real_parent)_3.0.csv", low_memory=False)
+df_nodes = pd.read_csv("updated_ordered_nodes_3.0.csv",low_memory=False)
 
 ##list of real parent
 ls_realp_leaf = list(df_leaves["real_parent"])
@@ -239,7 +240,7 @@ df_ages = pd.concat([nodes_part1,nodes_part3],axis=0)
 nodes_no_age = df_nodes[['id','parent']]
 nodes_for_age_function = pd.merge(nodes_no_age,df_ages, how = "left", on = "id")
 nodes_for_age_function = nodes_for_age_function.fillna(0)
-nodes_for_age_function.iat[0,2] = 4025.0
+nodes_for_age_function.iat[0,2] = 4246.666667.0
 nodes_for_age_function["age"] = pd.to_numeric(nodes_for_age_function["age"])
 
 

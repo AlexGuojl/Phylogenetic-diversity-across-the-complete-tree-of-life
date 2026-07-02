@@ -28,9 +28,7 @@ By combining the calculated ED scores with the red list, we calculated EDGE scor
 <img width="161" height="31" alt="image" src="https://github.com/user-attachments/assets/65281e94-d6bf-408f-ba28-973021965a38" />
 Where GEi is the extinction risk of species i, based on the IUCN red list  (Least Concern=0, Near Threatened and Conservation Dependent = 1, Vulnerable=2, Endangered=3, Critically Endangered=4). 
 
-EDGE2 is another index that measures the avertable loss of PD through the conservation of individual species. The EDGE2 of species i can be expressed as 
-![Uploading image.png…]()
-GE2i is the probability of extinction for species i at some given future time.
+EDGE2 is another index that measures the avertable loss of PD through the conservation of individual species. The EDGE2 of species i can be expressed as EDGE2i = ED2i x GE2i where GE2i is the probability of extinction for species i at some given future time.
 
 
 # edge2_pipeline_Ver.submit.R (Core Calculation Pipeline) 

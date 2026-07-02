@@ -7,25 +7,45 @@ The code can be divided into two primary scripts to separate heavy phylogenetic 
 
 # Mathematical Formulas Implemented in this code:
 For any sub-clade rooted at an interior node k, its total unique PD represents the sum of all underlying branch lengths shared or uniquely held by its descendant tips, formulated as:
+
+
 <img width="211" height="55" alt="image" src="https://github.com/user-attachments/assets/6d2f5cd6-7cba-4751-a01f-65714588e806" />
+
+
 Where Mk represents the complete set of branches (both interior and terminal) descended from node k, and Lm is the length of branch m.
 
 The expected PD loss of a clade rooted at node k can be calculated as:
+
 <img width="90" height="62" alt="image" src="https://github.com/user-attachments/assets/bb6ae2b8-f637-484d-9cee-8845a2e9aac1" />
-where  Dm represents the set of all extant species that descend from branch m. The product <img width="112" height="64" alt="image" src="https://github.com/user-attachments/assets/62d39b9a-8cfb-4ff9-ae35-e6fd5382225c" />
+
+where  Dm represents the set of all extant species that descend from branch m. 
+
+The product 
+
+<img width="112" height="64" alt="image" src="https://github.com/user-attachments/assets/62d39b9a-8cfb-4ff9-ae35-e6fd5382225c" />
+
+
  quantifies the probability of complete lineage collapse for branch m. 
 
-The ED of species i can be represented as <img width="255" height="55" alt="image" src="https://github.com/user-attachments/assets/9dc00dbf-8caa-46fa-9b10-8279edcc7ddb" />
+The ED of species i can be represented as
+
+<img width="255" height="55" alt="image" src="https://github.com/user-attachments/assets/9dc00dbf-8caa-46fa-9b10-8279edcc7ddb" />
+
+
 Where ni gives the total number of ancestral branches to species i,  𝐿𝑖,1 refers to the terminal branch length of species 𝑖, 𝐿𝑖,𝑗 for 2 ≤ 𝑗 ≤ 𝑛𝑖 gives the total length of interior branch j ancestral to species i and N𝑖,𝑗 gives the number of descendants for each of these same branches.
 
 The ED2 for species i can be expressed as:
+
 <img width="221" height="28" alt="image" src="https://github.com/user-attachments/assets/db0fefbd-c1e2-4ad6-bb1e-fcf03f810d82" />
 
 where ED2i is composed of TBLi (Terminal branch length of species i) plus another component. TBL measures the unique PD contributed by species i, which is also included by the same way while calculating ED. The set Ci,j represents all species descended from the corresponding branch with length Li,j (as defined earlier), and Pk is the probability of extinction of species k
 
 
 By combining the calculated ED scores with the red list, we calculated EDGE scores using following formula set out in previous work: 
+
+
 <img width="161" height="31" alt="image" src="https://github.com/user-attachments/assets/65281e94-d6bf-408f-ba28-973021965a38" />
+
 Where GEi is the extinction risk of species i, based on the IUCN red list  (Least Concern=0, Near Threatened and Conservation Dependent = 1, Vulnerable=2, Endangered=3, Critically Endangered=4). 
 
 EDGE2 is another index that measures the avertable loss of PD through the conservation of individual species. The EDGE2 of species i can be expressed as EDGE2i = ED2i x GE2i where GE2i is the probability of extinction for species i at some given future time.

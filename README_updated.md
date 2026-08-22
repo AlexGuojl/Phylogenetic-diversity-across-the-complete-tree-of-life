@@ -35,7 +35,7 @@ The ED of species i can be represented as
 Where ni gives the total number of ancestral branches to species i,  𝐿𝑖,1 refers to the terminal branch length of species 𝑖, 𝐿𝑖,𝑗 for 2 ≤ 𝑗 ≤ 𝑛𝑖 gives the total length of interior branch j ancestral to species i and N𝑖,𝑗 gives the number of descendants for each of these same branches.
 
 The ED2 for species i can be expressed as:
-<img width="284" height="63" alt="image" src="https://github.com/user-attachments/assets/ab90da21-2bf9-4138-80b0-734184eb1f9b" />
+<img width="360" height="103" alt="image" src="https://github.com/user-attachments/assets/0d77240b-6c55-42ce-9da1-951d1e732a79" />
 
 where ED2i is composed of TBLi (Terminal branch length of species i) plus another component. TBL measures the unique PD contributed by species i, which is also included by the same way while calculating ED. The set Ci,j represents all species descended from the corresponding branch with length Li,j (as defined earlier), and Pk is the probability of extinction of species k
 

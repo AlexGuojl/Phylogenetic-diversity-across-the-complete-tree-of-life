@@ -407,8 +407,11 @@ write.csv(x = species_in_clade_final2_2, file = "/Users/alexgjl/Desktop/Dated_tr
 
 #in this part, we use median ED value instead of a median tree (Tree_377)
 
+
+#add Crocodylidae
+
 get_nodename<- select(nodes_table, ott,name)
-clades <- c( "Eukaryota","Metazoa","Chordata","Actinopteri","Squamata","Aves", "Amphibia","Mammalia",
+clades <- c( "Eukaryota","Metazoa","Chordata","Actinopteri","Crocodylidae","Squamata","Aves", "Amphibia","Mammalia",
              "Chondrichthyes","Testudines","Arthropoda","Pancrustacea", "Insecta","Coleoptera","Lepidoptera",
              "Diptera","Hymenoptera","Hemiptera", "Odonata","Malacostraca","Copepoda","Branchiopoda","Chelicerata",
              "Myriapoda", "Mollusca","Platyhelminthes","Annelida","Nematoda","Cnidaria","Porifera", "Echinodermata",
@@ -677,7 +680,7 @@ df_fig2_vioin2$Group <- factor(df_fig2_vioin2$Group)
 df_tree <- data.frame(
   name = c(
     "Biota", "Eukaryota", "Metazoa", "Chordata",
-    "Actinopteri","Squamata","Aves","Amphibia","Mammalia","Chondrichthyes","Testudines",
+    "Actinopteri","Crocodylidae","Squamata","Aves","Amphibia","Mammalia","Chondrichthyes","Testudines",
     "Arthropoda", "Pancrustacea", "Insecta",
     "Coleoptera","Lepidoptera","Diptera","Hymenoptera","Hemiptera","Odonata",
     "Malacostraca","Copepoda","Branchiopoda",
@@ -690,7 +693,7 @@ df_tree <- data.frame(
     "Archaea","Bacteria"
   ),
   level = c(
-    0, 1, 2, 3, 4,4,4,4,4,4,4,
+    0, 1, 2, 3, 4,4,4,4,4,4,4,4,
     3, 4, 5, 6,6,6,6,6,6, 5,5,5, 4,4,
     3,3,3,3,3,3,3,3,3,
     2, 3, 4,4, 3,3,3,3,
@@ -751,8 +754,8 @@ df_labels <- df_prep %>%
     p_upper = mean(unlist(random_counts) >= k_obs),
     p_lower = mean(unlist(random_counts) <= k_obs),
     sig_label = case_when(
-      p_lower < 0.05 ~ "*-",
-      p_upper < 0.05 ~ "*+",
+      p_lower < 0.025 ~ "*-",
+      p_upper < 0.025 ~ "*+",
       TRUE ~ ""
     )
   ) %>%
@@ -800,6 +803,22 @@ x_pos_min <- violin1_offset
 x_pos_max <- violin1_offset + violin1_width
 x_pos_med <- violin1_offset + ((med_ed_log - min_ed_log) / (max_ed_log - min_ed_log)) * violin1_width
 
+ED99_log <- log10(
+  quantile(EQS_medianED1$median_ed,
+           probs = 0.99,
+           na.rm = TRUE)
+)
+
+# convert ED99 to violin coordinate
+ED99_x <- violin1_offset +
+  ((ED99_log - min(df_violin1_aligned$log_ed_scaled, na.rm = TRUE)) /
+     (max(df_violin1_aligned$log_ed_scaled, na.rm = TRUE) -
+        min(df_violin1_aligned$log_ed_scaled, na.rm = TRUE))) *
+  violin1_width
+
+
+
+
 # 4.2 Generate the final composite image without a gray background.
 p_merged <- ggplot() +
   
@@ -823,7 +842,16 @@ p_merged <- ggplot() +
     color = "grey20",
     size = 0.3
   ) +
-  
+  geom_segment(
+    aes(
+      x = ED99_x,
+      xend = ED99_x,
+      y = min(df_tree$y),
+      yend = max(df_tree$y)
+    ),
+    linewidth = 0.25,
+    color = "black"
+  ) +
   # violin2
   geom_violin(
     data = df_violin2_aligned,
@@ -871,14 +899,18 @@ p_merged <- ggplot() +
     y = 0, 
     label = c("0%", paste0(round(max_pct / 2, 1), "%"), paste0(round(max_pct, 1), "%")), 
     size = 2.2, color = "black", vjust = 1
-  ) +
+  ) +  
+  annotate(
+    "text",  x = ED99_x,  y = 0,
+    label = "Q(0.99)",
+    size = 2.2, color = "black", vjust = 1) +
   
   
   annotate("text", x = violin1_offset + violin1_width/2, y = max(df_tree$y) + 1.2, 
            label = "Log10(ED)", size = 2.5, fontface = "bold", color = "grey20") +
   annotate("text", x = violin2_offset + (violin2_width * shape_compress)/2, y = max(df_tree$y) + 1.2, 
            label = "Random Null Distribution (%)", size = 2.5, fontface = "bold", color = "grey20") +
-  
+
   
   theme_void() +
   theme(
@@ -887,8 +919,7 @@ p_merged <- ggplot() +
     legend.title = element_text(size = 9, face = "bold"),
     legend.text = element_text(size = 8)
   ) +
-  xlim(-0.5, violin2_offset + violin2_width + 0.5) 
-
+  xlim(-0.5, violin2_offset + violin2_width + 0.5)
 
 print(p_merged)
 
@@ -961,8 +992,8 @@ df_labels_vert <- df_prep_vert %>%
     p_upper = mean(unlist(random_counts) >= k_obs),
     p_lower = mean(unlist(random_counts) <= k_obs),
     sig_label = case_when(
-      p_lower < 0.05 ~ "*-",
-      p_upper < 0.05 ~ "*+",
+      p_lower < 0.025 ~ "*-",
+      p_upper < 0.025 ~ "*+",
       TRUE ~ ""
     )
   ) %>%
@@ -1094,7 +1125,21 @@ p_vert <- ggplot() +
 print(p_vert)
 
 
+N <- nrow(EQS_medianED1)
 
+Q99 <- quantile(
+  EQS_medianED1$median_ed,
+  0.99,
+  na.rm = TRUE
+)
+
+K <- sum(EQS_medianED1$median_ed >= Q99)
+
+c(
+  N = N,
+  K = K,
+  proportion = K/N
+)
 
 
 
@@ -1976,7 +2021,7 @@ p_box_tree <- ggplot() +
             hjust = 0, size = 2.4, fontface = "italic") +
   geom_boxplot(
     data = df_boxplot_aligned,
-    aes(x = box_x, y = tree_y, group = tree_y, fill = color), # 👈 映射自带的 color 列
+    aes(x = box_x, y = tree_y, group = tree_y, fill = color), # 
     outlier.size = 0.5,       
     outlier.alpha = 0.5,      
     width = 0.5,              

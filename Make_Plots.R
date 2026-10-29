@@ -408,9 +408,7 @@ write.csv(x = species_in_clade_final2_2, file = "/Users/alexgjl/Desktop/Dated_tr
 #in this part, we use median ED value instead of a median tree (Tree_377)
 
 
-#add Crocodylidae
-
-get_nodename<- select(nodes_table, ott,name)
+get_nodename <- select(nodes_table, ott, name)
 clades <- c( "Eukaryota","Metazoa","Chordata","Actinopteri","Crocodylidae","Squamata","Aves", "Amphibia","Mammalia",
              "Chondrichthyes","Testudines","Arthropoda","Pancrustacea", "Insecta","Coleoptera","Lepidoptera",
              "Diptera","Hymenoptera","Hemiptera", "Odonata","Malacostraca","Copepoda","Branchiopoda","Chelicerata",
@@ -453,53 +451,46 @@ result_list <- lapply(seq_along(selected_nodes), function(i){
 })
 nodes_with_tips <- bind_rows(result_list)
 
-matched_rows$node_ott<- matched_rows$ott
-matched_rows$Group<- matched_rows$name
-matched_rows1<- select(matched_rows,node_ott,Group)
+matched_rows$node_ott <- matched_rows$ott
+matched_rows$Group <- matched_rows$name
+matched_rows1 <- select(matched_rows, node_ott, Group)
 nodes_with_tips$node_ott <- nodes_with_tips$Group
-nodes_with_tips<- select(nodes_with_tips,Species, node_ott)
-species_in_clade <- merge(nodes_with_tips,matched_rows1,how = "left",on = "node_ott")
+nodes_with_tips <- select(nodes_with_tips, Species, node_ott)
+species_in_clade <- merge(nodes_with_tips, matched_rows1, how = "left", on = "node_ott")
 
 species_in_clade$name <- sub("_ott.*", "", species_in_clade$Species)      
 species_in_clade$name <- gsub("_", " ", species_in_clade$name)            
 species_in_clade$tip_ott <- as.numeric(sub(".*_ott", "", species_in_clade$Species))
 
-
-EQS_medianED1<- select(EQS_medianED,Species,median_ed)
-
-
-#repeat name：
-#Loligopsis_sp._ott0000  
-#Periboea_sp._ott0000    
-#Pasithoe_sp._ott0000     
+EQS_medianED1 <- select(EQS_medianED, Species, median_ed)
 
 EQS_medianED1 <- EQS_medianED1 %>%
   group_by(Species) %>%
   summarise(median_ed = median(median_ed, na.rm = TRUE))
 
-species_in_clade1 <- select(species_in_clade,Species,Group)
-species_in_clade_final<- merge(species_in_clade1,EQS_medianED1,by = "Species", all.x = TRUE)
+species_in_clade1 <- select(species_in_clade, Species, Group)
+species_in_clade_final <- merge(species_in_clade1, EQS_medianED1, by = "Species", all.x = TRUE)
 
-missing_rows <- species_in_clade_final[is.na(species_in_clade_final$median_ed), ]##all extinct species
-missing_rows<- select(missing_rows,Species)
-missing_rows<-unique(missing_rows)
+missing_rows <- species_in_clade_final[is.na(species_in_clade_final$median_ed), ] ##all extinct species
+missing_rows <- select(missing_rows, Species)
+missing_rows <- unique(missing_rows)
 missing_rows1 <- missing_rows %>%
   extract(Species,
           into = c("name", "ott"),
           regex = "^(.*)_ott(\\d+)$") %>%
   mutate(name = gsub("_", " ", name))
 
-missing_rows1<- merge(missing_rows1,iucn,by = "ott", all.x = TRUE)
-##all lacked species are either extinct in wild or extinct
+missing_rows1 <- merge(missing_rows1, iucn, by = "ott", all.x = TRUE)
 species_in_clade_final <- species_in_clade_final[!is.na(species_in_clade_final$median_ed), ]
-species_in_clade_final<- filter(species_in_clade_final,species_in_clade_final$Group != "CHONDRICHTHYES")
-#write.csv(x = species_in_clade_final, file = "/Users/alexgjl/Desktop/Dated_tree_paper/Selected_clades_with_descendants.csv")
-add_vert<-get_nodename[get_nodename$name %in% c(
+species_in_clade_final <- filter(species_in_clade_final, species_in_clade_final$Group != "CHONDRICHTHYES")
+
+add_vert <- get_nodename[get_nodename$name %in% c(
   "Testudines", "Actinopterygii", "CYCLOSTOMATA"
 ), ]
 add_vert <- rbind(add_vert,
                   data.frame(name = "Crocodylidae",
                              ott = 335582))
+
 ###get descendants from fully-dated tree
 node_ott <- as.numeric(str_extract(tree$node.label, "(?<=ott)\\d+"))
 selected_ott <- add_vert$ott
@@ -507,11 +498,6 @@ selected_node_idx <- match(selected_ott, node_ott)
 n_tips <- length(tree$tip.label)
 selected_nodes <- selected_node_idx + n_tips
 
-get_tips_from_node <- function(tree, node){
-  tips <- extract.clade(tree, node)$tip.label
-  # edxtract ott ftom tip.label
-  return(tips)
-}
 result_list <- lapply(seq_along(selected_nodes), function(i){
   node <- selected_nodes[i]
   node_ott_val <- selected_ott[i]
@@ -523,56 +509,41 @@ result_list <- lapply(seq_along(selected_nodes), function(i){
 })
 nodes_with_tips <- bind_rows(result_list)
 
-
 nodes_with_tips$ott <- nodes_with_tips$Group
-nodes_with_tips<- merge(nodes_with_tips,add_vert,by = "ott", all.x = TRUE)
-nodes_with_tips<- select(nodes_with_tips,ott,Species,name)
+nodes_with_tips <- merge(nodes_with_tips, add_vert, by = "ott", all.x = TRUE)
+nodes_with_tips <- select(nodes_with_tips, ott, Species, name)
 nodes_with_tips$Group <- nodes_with_tips$name
-nodes_with_tips<- select(nodes_with_tips,ott,Species,Group)
-vert4ED<- merge(nodes_with_tips,EQS_medianED1,by = "Species", all.x = TRUE)
-vert4ED<- select(vert4ED,Species,Group,median_ed)
-species_in_clade_final1<- rbind(species_in_clade_final,vert4ED)
+nodes_with_tips <- select(nodes_with_tips, ott, Species, Group)
+vert4ED <- merge(nodes_with_tips, EQS_medianED1, by = "Species", all.x = TRUE)
+vert4ED <- select(vert4ED, Species, Group, median_ed)
+species_in_clade_final1 <- rbind(species_in_clade_final, vert4ED)
 
 pd_vals <- read.csv("/Users/alexgjl/Desktop/Dated_tree_paper/PD_median.csv",
-                    stringsAsFactors=F, header=T)
+                    stringsAsFactors = F, header = T)
 selected_clades_all <- unique(species_in_clade_final1$Group)
 
 matched_rows1$ott <- matched_rows1$node_ott
-matched_rows2<- select(matched_rows1,ott,Group)
-add_vert$Group<- add_vert$name
-add_vert1<- select(add_vert,ott,Group)
-matched_rows_all <- rbind(matched_rows2,add_vert1)
-Selected_PD <-merge(matched_rows_all,pd_vals,by = "ott",all.x = TRUE)
-Selected_PD$logPD<- log(Selected_PD$median_pd,10)
-Selected_PD<- select(Selected_PD,Group,median_pd,logPD)
-species_in_clade_final1<-merge(species_in_clade_final1,Selected_PD,by = "Group",all.x = TRUE) 
+matched_rows2 <- select(matched_rows1, ott, Group)
+add_vert$Group <- add_vert$name
+add_vert1 <- select(add_vert, ott, Group)
+matched_rows_all <- rbind(matched_rows2, add_vert1)
+Selected_PD <- merge(matched_rows_all, pd_vals, by = "ott", all.x = TRUE)
+Selected_PD$logPD <- log(Selected_PD$median_pd, 10)
+Selected_PD <- select(Selected_PD, Group, median_pd, logPD)
+species_in_clade_final1 <- merge(species_in_clade_final1, Selected_PD, by = "Group", all.x = TRUE) 
 
-Clade_Biota<- EQS_medianED
+Clade_Biota <- EQS_medianED
 Clade_Biota$median_pd <- rep(median_PD)
-Clade_Biota$logPD<- log10(Clade_Biota$median_pd)
+Clade_Biota$logPD <- log10(Clade_Biota$median_pd)
 Clade_Biota$Group <- rep("Biota")
-species_in_clade_final2 <- rbind(Clade_Biota,species_in_clade_final1)
-species_in_clade_final2<- unique(species_in_clade_final2)
-duplicate_summary2 <- species_in_clade_final2 %>%
-  dplyr::count(Group, Species) %>%
-  dplyr::filter(n > 1)
+species_in_clade_final2 <- rbind(Clade_Biota, species_in_clade_final1)
+species_in_clade_final2 <- unique(species_in_clade_final2)
 
-
-
-
-
-EQS_medianED2<- read.csv("/Users/alexgjl/Desktop/Dated_tree_paper/ED2_median.csv",
-                         stringsAsFactors=F, header=T)
+EQS_medianED2 <- read.csv("/Users/alexgjl/Desktop/Dated_tree_paper/ED2_median.csv",
+                          stringsAsFactors = F, header = T)
 EQS_medianED2$median_ed2 <- EQS_medianED2$median_ed
-EQS_medianED2<- select(EQS_medianED2,Species,median_ed2)
-species_in_clade_final3<- merge(species_in_clade_final2,EQS_medianED2,on = "Species", all.x = TRUE)
-
-colnames(species_in_clade_final3)
-
-duplicate_summary3 <- species_in_clade_final3 %>%
-  dplyr::count(Group, Species) %>%
-  dplyr::filter(n > 1)
-
+EQS_medianED2 <- select(EQS_medianED2, Species, median_ed2)
+species_in_clade_final3 <- merge(species_in_clade_final2, EQS_medianED2, on = "Species", all.x = TRUE)
 
 compare_ED <- function(df) {
   df <- df[!is.na(df$median_ed), ]
@@ -596,10 +567,14 @@ compare_ED <- function(df) {
   return(df)
 }
 
-# generate Null Distribution 
-analyze_quantile_enrichment2 <- function(df, EQS_medianED1) {
+# ==============================================================================
+# 1. Hypergeometric Test for Enrichment / Depletion
+# ==============================================================================
+analyze_hypergeometric_enrichment <- function(df, EQS_medianED1) {
   EQS_medianED1 <- EQS_medianED1[!is.na(EQS_medianED1$median_ed), ]
+  N <- nrow(EQS_medianED1) # 
   threshold_99 <- quantile(EQS_medianED1$median_ed, probs = 0.99, na.rm = TRUE)
+  K <- sum(EQS_medianED1$median_ed >= threshold_99) 
   
   summary_df <- df %>%
     group_by(Group) %>%
@@ -612,17 +587,19 @@ analyze_quantile_enrichment2 <- function(df, EQS_medianED1) {
   result_df <- summary_df %>%
     rowwise() %>%
     mutate(
-      random_counts = list(replicate(1000, {
-        sampled <- sample(EQS_medianED1$median_ed, size = num_species, replace = FALSE)
-        sum(sampled >= threshold_99)
-      })),
-      p_greater_equal = mean(unlist(random_counts) >= num_top_99),
-      p_less_equal = mean(unlist(random_counts) <= num_top_99)
+      # phyper(k - 1, K, N - K, n, lower.tail = FALSE)
+      p_upper = phyper(num_top_99 - 1, K, N - K, num_species, lower.tail = FALSE),
+
+      p_lower = phyper(num_top_99, K, N - K, num_species, lower.tail = TRUE),
+      sig_label = case_when(
+        p_lower < 0.025 ~ "*-",
+        p_upper < 0.025 ~ "*+",
+        TRUE ~ ""
+      )
     ) %>%
     ungroup()
   return(result_df)
 }
-
 
 build_clade_groups_fig2 <- function(df) {
   pd_table <- df %>%
@@ -637,17 +614,12 @@ build_clade_groups_fig2 <- function(df) {
 }
 
 # 2.1 Enrichment Analysis and Annotation
-EQS_medianED1<- select(EQS_medianED,Species,median_ed)
+EQS_medianED1 <- select(EQS_medianED, Species, median_ed)
 species_in_clade_final4 <- compare_ED(species_in_clade_final3)
-analyzed_species_in_clade_final <- analyze_quantile_enrichment2(species_in_clade_final4, EQS_medianED1)
+
+# 替换为超几何检验
+analyzed_species_in_clade_final <- analyze_hypergeometric_enrichment(species_in_clade_final4, EQS_medianED1)
 species_in_clade_final4_1 <- merge(species_in_clade_final4, analyzed_species_in_clade_final, by = "Group", all.x = TRUE)
-
-duplicate_summary4 <- species_in_clade_final4 %>%
-  dplyr::count(Group, Species) %>%
-  dplyr::filter(n > 1)
-
-
-
 
 # 2.2 Extract sorting and color palette information
 info <- build_clade_groups_fig2(species_in_clade_final4_1)
@@ -662,17 +634,17 @@ grouped_species_in_clade_final4 <- species_in_clade_final4_1 %>%
 pd_table <- pd_table %>% arrange(desc(logPD))
 grouped_species_in_clade_final4$Group <- factor(grouped_species_in_clade_final4$Group, levels = pd_table$Group)
 
-# 2.4 Separate plotting subsets.
+# 2.4 Separate plotting subsets (Only keeping violin 1 and labels/stats)
 df_fig2_vioin1 <- select(grouped_species_in_clade_final4, Group, Species, median_ed, logPD)
-df_fig2_vioin2 <- select(grouped_species_in_clade_final4, Group, random_counts, num_top_99, logPD, num_species) %>% unique()
+df_labels <- select(grouped_species_in_clade_final4, Group, num_top_99, num_species, sig_label) %>% unique()
 
 df_fig2_vioin1$Group <- as.character(df_fig2_vioin1$Group)
 df_fig2_vioin1$Group[df_fig2_vioin1$Group == "CYCLOSTOMATA"] <- "Cyclostomata"
 df_fig2_vioin1$Group <- factor(df_fig2_vioin1$Group)
 
-df_fig2_vioin2$Group <- as.character(df_fig2_vioin2$Group)
-df_fig2_vioin2$Group[df_fig2_vioin2$Group == "CYCLOSTOMATA"] <- "Cyclostomata"
-df_fig2_vioin2$Group <- factor(df_fig2_vioin2$Group)
+df_labels$Group <- as.character(df_labels$Group)
+df_labels$Group[df_labels$Group == "CYCLOSTOMATA"] <- "Cyclostomata"
+df_labels$Group <- factor(df_labels$Group)
 
 # ==============================================================================
 # 3. construct tree structure
@@ -739,58 +711,19 @@ df_violin1_aligned <- df_fig2_vioin1 %>%
     log_ed_scaled = log10(median_ed)
   )
 
-
-
-# 4.1 second column of violin plot
-df_prep <- df_fig2_vioin2 %>%
+df_labels_aligned <- df_labels %>%
   left_join(df_tree %>% select(name, tree_y = y), by = c("Group" = "name")) %>%
   filter(!is.na(tree_y))
 
-# 1. p upper/p lower, label "+" or "-"
-df_labels <- df_prep %>%
-  rowwise() %>%
-  mutate(
-    k_obs = num_top_99, 
-    p_upper = mean(unlist(random_counts) >= k_obs),
-    p_lower = mean(unlist(random_counts) <= k_obs),
-    sig_label = case_when(
-      p_lower < 0.025 ~ "*-",
-      p_upper < 0.025 ~ "*+",
-      TRUE ~ ""
-    )
-  ) %>%
-  ungroup()
+# Layout adjustment for single violin column
+violin1_offset <- 1.6  
+violin1_width  <- 1.8  
 
-# 2. Expand the list and convert the count into a percentage relative to the total number of species in each group.
-expanded_list <- lapply(1:nrow(df_prep), function(i) {
-  row_data <- df_prep[i, ]
-  data.frame(
-    Group = row_data$Group,
-    tree_y = row_data$tree_y,
-    random_pct = (unlist(row_data$random_counts) / row_data$num_species) * 100
-  )
-})
-df_violin2_flat <- do.call(rbind, expanded_list)
-
-
-max_pct <- max(df_violin2_flat$random_pct, na.rm = TRUE)
-
-# layout
-violin1_offset <- 2.2  
-violin1_width  <- 1.5  
-violin2_offset <- 4.2  
-violin2_width  <- 2.5   
-shape_compress <- 0.5  
 df_violin1_aligned$violin_x <- violin1_offset + 
   ((df_violin1_aligned$log_ed_scaled - min(df_violin1_aligned$log_ed_scaled, na.rm=TRUE)) / 
      (max(df_violin1_aligned$log_ed_scaled, na.rm=TRUE) - min(df_violin1_aligned$log_ed_scaled, na.rm=TRUE))) * violin1_width
 
-df_violin2_aligned <- df_violin2_flat %>%
-  mutate(
-    violin_x = violin2_offset + (random_pct / max_pct) * violin2_width * shape_compress
-  )
-
-# Dynamically calculate the coordinates for the first column (Log10 ED) precisely
+# Dynamically calculate coordinates for Log10 ED
 min_ed_log <- round(min(df_violin1_aligned$log_ed_scaled, na.rm = TRUE), 2)
 med_ed_log <- round(median(df_violin1_aligned$log_ed_scaled, na.rm = TRUE), 2)
 max_ed_log <- round(max(df_violin1_aligned$log_ed_scaled, na.rm = TRUE), 2)
@@ -809,20 +742,17 @@ ED99_log <- log10(
            na.rm = TRUE)
 )
 
-# convert ED99 to violin coordinate
 ED99_x <- violin1_offset +
   ((ED99_log - min(df_violin1_aligned$log_ed_scaled, na.rm = TRUE)) /
      (max(df_violin1_aligned$log_ed_scaled, na.rm = TRUE) -
         min(df_violin1_aligned$log_ed_scaled, na.rm = TRUE))) *
   violin1_width
 
-
-
-
-# 4.2 Generate the final composite image without a gray background.
+# ==============================================================================
+# 4. Generate the final composite image (Tree + ED Violin + Sig Labels)
+# ==============================================================================
 p_merged <- ggplot() +
-  
-  
+  # Tree segments
   geom_segment(data = segments,
                aes(x = x_start, xend = x_start, y = y_start, yend = y_end),
                linewidth = 0.4, color = "grey30") +
@@ -833,7 +763,7 @@ p_merged <- ggplot() +
             aes(x = x + 0.05, y = y, label = name),
             hjust = 0, size = 2.4, fontface = "italic") +
   
-  # violin column 1
+  # Violin column (Log10 ED)
   geom_violin(
     data = df_violin1_aligned,
     aes(x = violin_x, y = tree_y, group = tree_y, fill = logPD),
@@ -842,6 +772,7 @@ p_merged <- ggplot() +
     color = "grey20",
     size = 0.3
   ) +
+  # ED 99% threshold line
   geom_segment(
     aes(
       x = ED99_x,
@@ -852,22 +783,12 @@ p_merged <- ggplot() +
     linewidth = 0.25,
     color = "black"
   ) +
-  # violin2
-  geom_violin(
-    data = df_violin2_aligned,
-    aes(x = violin_x, y = tree_y, group = tree_y),
-    fill = "transparent", 
-    color = "grey40",     
-    scale = "width",
-    size = 0.3,
-    adjust = 1.2  
-  ) +
   
-  # add *+  or  *-)
+  # Significance labels (*+ or *- from Hypergeometric test)
   geom_text(
-    data = df_labels,
+    data = df_labels_aligned,
     aes(
-      x = violin2_offset + (violin2_width * shape_compress) + 0.08, 
+      x = violin1_offset + violin1_width + 0.1, 
       y = tree_y, 
       label = sig_label
     ),
@@ -877,40 +798,31 @@ p_merged <- ggplot() +
     hjust = 0
   ) +
   
-  # fill color
+  # Fill color scale
   scale_fill_gradient(
     low = "#FFCC00",
     high = "#660066",
-    name = "logPD",
+    name = "Log10 (PD)Myr",
     limits = c(global_min, global_max)
   ) +
   
-  # label axis
+  # Axis annotations
   annotate(
     "text", 
     x = c(x_pos_min, x_pos_med, x_pos_max), 
     y = 0, 
     label = c(label_min, label_med, label_max), 
     size = 2.2, color = "black", vjust = 1
-  ) +
-  annotate(
-    "text", 
-    x = c(violin2_offset, violin2_offset + (violin2_width * shape_compress)/2, violin2_offset + (violin2_width * shape_compress)), 
-    y = 0, 
-    label = c("0%", paste0(round(max_pct / 2, 1), "%"), paste0(round(max_pct, 1), "%")), 
-    size = 2.2, color = "black", vjust = 1
   ) +  
   annotate(
-    "text",  x = ED99_x,  y = 0,
+    "text", x = ED99_x, y = 0,
     label = "Q(0.99)",
-    size = 2.2, color = "black", vjust = 1) +
-  
-  
-  annotate("text", x = violin1_offset + violin1_width/2, y = max(df_tree$y) + 1.2, 
-           label = "Log10(ED)", size = 2.5, fontface = "bold", color = "grey20") +
-  annotate("text", x = violin2_offset + (violin2_width * shape_compress)/2, y = max(df_tree$y) + 1.2, 
-           label = "Random Null Distribution (%)", size = 2.5, fontface = "bold", color = "grey20") +
-
+    size = 2.2, color = "black", vjust = 1
+  ) +
+  annotate(
+    "text", x = violin1_offset + violin1_width/2, y = max(df_tree$y) + 1.2, 
+    label = "Log10(ED)", size = 2.5, fontface = "bold", color = "grey20"
+  ) +
   
   theme_void() +
   theme(
@@ -919,228 +831,9 @@ p_merged <- ggplot() +
     legend.title = element_text(size = 9, face = "bold"),
     legend.text = element_text(size = 8)
   ) +
-  xlim(-0.5, violin2_offset + violin2_width + 0.5)
+  xlim(-0.5, violin1_offset + violin1_width + 0.8)
 
 print(p_merged)
-
-
-
-#################################vertebrate in another panel###################################
-###############################################################################################
-df_vert <- data.frame(
-  name = c("Vertebrata","Aves","Mammalia","Squamata","Testudines",
-           "Crocodylidae","Amphibia","Actinopterygii",
-           "Chondrichthyes","Cyclostomata"),
-  level = c(0,1,1,1,1,1,1,1,1,1)
-)
-
-
-df_vert <- df_vert %>%
-  mutate(y = seq(n(), 1)) %>%      
-  mutate(x = level * 0.15)         
-
-
-df_vert$parent <- NA
-for (i in 2:nrow(df_vert)) {
-  for (j in (i-1):1) {
-    if (df_vert$level[j] == df_vert$level[i] - 1) {
-      df_vert$parent[i] <- j
-      break
-    }
-  }
-}
-
-segments <- df_vert %>%
-  filter(!is.na(parent)) %>%
-  mutate(
-    x_start = df_vert$x[parent],
-    y_start = df_vert$y[parent],
-    x_end = x,
-    y_end = y
-  )
-
-
-violin1_offset <- 1.2   
-violin1_width  <- 1.5   
-
-
-violin2_offset <- 3.2   
-violin2_width  <- 2.5   
-shape_compress <- 0.5   
-
-
-df_violin1_aligned_vert <- df_fig2_vioin1 %>%
-  select(-logPD) %>%
-  left_join(pd_table, by = "Group") %>%
-  left_join(df_vert %>% select(name, tree_y = y), by = c("Group" = "name")) %>%
-  filter(!is.na(tree_y)) %>%
-  mutate(
-    log_ed_scaled = log10(median_ed),
-    violin_x = violin1_offset + ((log_ed_scaled - min(log_ed_scaled, na.rm=TRUE)) / 
-                                   (max(log_ed_scaled, na.rm=TRUE) - min(log_ed_scaled, na.rm=TRUE))) * violin1_width
-  )
-
-
-df_prep_vert <- df_fig2_vioin2 %>%
-  left_join(df_vert %>% select(name, tree_y = y), by = c("Group" = "name")) %>%
-  filter(!is.na(tree_y))
-
-df_labels_vert <- df_prep_vert %>%
-  rowwise() %>%
-  mutate(
-    k_obs = num_top_99, 
-    p_upper = mean(unlist(random_counts) >= k_obs),
-    p_lower = mean(unlist(random_counts) <= k_obs),
-    sig_label = case_when(
-      p_lower < 0.025 ~ "*-",
-      p_upper < 0.025 ~ "*+",
-      TRUE ~ ""
-    )
-  ) %>%
-  ungroup()
-
-
-expanded_list_vert <- lapply(1:nrow(df_prep_vert), function(i) {
-  row_data <- df_prep_vert[i, ]
-  data.frame(
-    Group = row_data$Group,
-    tree_y = row_data$tree_y,
-    random_pct = (unlist(row_data$random_counts) / row_data$num_species) * 100
-  )
-})
-df_violin2_flat_vert <- do.call(rbind, expanded_list_vert)
-
-
-max_pct_vert <- max(df_violin2_flat_vert$random_pct, na.rm = TRUE)
-df_violin2_aligned_vert <- df_violin2_flat_vert %>%
-  mutate(
-    violin_x = violin2_offset + (random_pct / max_pct_vert) * violin2_width * shape_compress
-  )
-
-
-min_ed_log_vert <- round(min(df_violin1_aligned_vert$log_ed_scaled, na.rm = TRUE), 2)
-med_ed_log_vert <- round(median(df_violin1_aligned_vert$log_ed_scaled, na.rm = TRUE), 2)
-max_ed_log_vert <- round(max(df_violin1_aligned_vert$log_ed_scaled, na.rm = TRUE), 2)
-
-label_min_vert <- paste0("Log(10)ED Min\n(", min_ed_log_vert, ")")
-label_med_vert <- paste0("Log(10)ED Med\n(", med_ed_log_vert, ")")
-label_max_vert <- paste0("Log(10)ED Max\n(", max_ed_log_vert, ")")
-
-x_pos_min_vert <- violin1_offset
-x_pos_max_vert <- violin1_offset + violin1_width
-x_pos_med_vert <- violin1_offset + ((med_ed_log_vert - min_ed_log_vert) / (max_ed_log_vert - min_ed_log_vert)) * violin1_width
-
-
-p_vert <- ggplot() +
-  
-  
-  
-  geom_segment(data = segments,
-               aes(x = x_start, xend = x_start, y = y_start, yend = y_end),
-               linewidth = 0.4, color = "grey30") +
-  geom_segment(data = segments,
-               aes(x = x_start, xend = x_end, y = y_end, yend = y_end),
-               linewidth = 0.4, color = "grey30") +
-  geom_text(data = df_vert,
-            aes(x = x + 0.05, y = y, label = name),
-            hjust = 0, size = 2.4, fontface = "italic") +
-  
-  
-  geom_violin(
-    data = df_violin1_aligned_vert,
-    aes(x = violin_x, y = tree_y, group = tree_y, fill = logPD),
-    alpha = 0.8,
-    scale = "width",
-    color = "grey20",
-    size = 0.3
-  ) +
-  
-  
-  geom_violin(
-    data = df_violin2_aligned_vert,
-    aes(x = violin_x, y = tree_y, group = tree_y),
-    fill = "transparent", 
-    color = "grey40",     
-    scale = "width",
-    size = 0.3,
-    adjust = 1.2  
-  ) +
-  
-  
-  geom_text(
-    data = df_labels_vert,
-    aes(
-      x = violin2_offset + (violin2_width * shape_compress) + 0.08, 
-      y = tree_y, 
-      label = sig_label
-    ),
-    size = 3.5, 
-    fontface = "bold",
-    color = "black",
-    hjust = 0
-  ) +
-  
-  
-  scale_fill_gradient(
-    low = "#FFCC00",
-    high = "#660066",
-    name = "logPD",
-    limits = c(global_min, global_max)
-  ) +
-  
-  
-  annotate(
-    "text", 
-    x = c(x_pos_min_vert, x_pos_med_vert, x_pos_max_vert), 
-    y = 0, 
-    label = c(label_min_vert, label_med_vert, label_max_vert), 
-    size = 2.2, color = "black", vjust = 1
-  ) +
-  annotate(
-    "text", 
-    x = c(violin2_offset, violin2_offset + (violin2_width * shape_compress)/2, violin2_offset + (violin2_width * shape_compress)), 
-    y = 0, 
-    
-    label = c("0%", paste0(round(max_pct_vert / 2, 1), "%"), paste0(round(max_pct_vert, 1), "%")), 
-    size = 2.2, color = "black", vjust = 1
-  ) +
-  
-  
-  annotate("text", x = violin1_offset + violin1_width/2, y = max(df_vert$y) + 0.4, 
-           label = "Log10(ED)", size = 2.5, fontface = "bold", color = "grey20") +
-  annotate("text", x = violin2_offset + (violin2_width * shape_compress)/2, y = max(df_vert$y) + 0.4, 
-           label = "Random Null Distribution (%)", size = 2.5, fontface = "bold", color = "grey20") +
-  
-  
-  theme_void() +
-  theme(
-    legend.position = "right",
-    legend.key.height = unit(1, "cm"),
-    legend.title = element_text(size = 9, face = "bold"),
-    legend.text = element_text(size = 8)
-  ) +
-  xlim(-0.5, violin2_offset + violin2_width + 0.5) 
-
-
-print(p_vert)
-
-
-N <- nrow(EQS_medianED1)
-
-Q99 <- quantile(
-  EQS_medianED1$median_ed,
-  0.99,
-  na.rm = TRUE
-)
-
-K <- sum(EQS_medianED1$median_ed >= Q99)
-
-c(
-  N = N,
-  K = K,
-  proportion = K/N
-)
-
 
 
 ####Next: make EDGE & EDGE2 plot
